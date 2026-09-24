@@ -64,6 +64,7 @@ async function addManager() {
     renderEmailList($("#mgmtManagerList"), data.list, removeManager);
     if (input) input.value = "";
     setStatus($("#mgmtManagerStatus"), "추가되었습니다.");
+    loadAdminLog();
   } catch (error) {
     setStatus($("#mgmtManagerStatus"), `실패했습니다. (${error.message || ""})`, true);
   }
@@ -75,6 +76,7 @@ async function removeManager(email) {
     const data = await callApi(idToken, "/api/management/managers", { action: "remove", email });
     renderEmailList($("#mgmtManagerList"), data.list, removeManager);
     setStatus($("#mgmtManagerStatus"), "삭제되었습니다.");
+    loadAdminLog();
   } catch (error) {
     setStatus($("#mgmtManagerStatus"), `실패했습니다. (${error.message || ""})`, true);
   }
@@ -97,6 +99,7 @@ async function addBanned() {
     renderEmailList($("#mgmtBannedList"), data.list, removeBanned);
     if (input) input.value = "";
     setStatus($("#mgmtBannedStatus"), "차단되었습니다.");
+    loadAdminLog();
   } catch (error) {
     setStatus($("#mgmtBannedStatus"), `실패했습니다. (${error.message || ""})`, true);
   }
@@ -108,6 +111,7 @@ async function removeBanned(email) {
     const data = await callApi(idToken, "/api/management/banned", { action: "remove", email });
     renderEmailList($("#mgmtBannedList"), data.list, removeBanned);
     setStatus($("#mgmtBannedStatus"), "차단이 해제되었습니다.");
+    loadAdminLog();
   } catch (error) {
     setStatus($("#mgmtBannedStatus"), `실패했습니다. (${error.message || ""})`, true);
   }
@@ -132,6 +136,7 @@ async function saveLimit() {
     const data = await callApi(idToken, "/api/management/settings", { action: "set", dailyTokenLimit: value });
     if (input) input.value = data.dailyTokenLimit;
     setStatus($("#mgmtLimitStatus"), "저장되었습니다.");
+    loadAdminLog();
   } catch (error) {
     setStatus($("#mgmtLimitStatus"), `실패했습니다. (${error.message || ""})`, true);
   }
@@ -196,6 +201,7 @@ async function saveBanner() {
     bannerItemsDraft = Array.isArray(data.banner?.items) ? [...data.banner.items] : [];
     renderBannerItems();
     setStatus($("#mgmtBannerStatus"), "저장되었습니다.");
+    loadAdminLog();
   } catch (error) {
     setStatus($("#mgmtBannerStatus"), `실패했습니다. (${error.message || ""})`, true);
   }
@@ -223,6 +229,7 @@ async function saveAnnouncement() {
     const idToken = await currentUser.getIdToken();
     await callApi(idToken, "/api/management/notices", { action: "setAnnouncement", ...currentAnnouncementDraft() });
     setStatus($("#mgmtAnnouncementStatus"), "게시되었습니다. 사용자가 다음에 들어오면 다시 보여요.");
+    loadAdminLog();
   } catch (error) {
     setStatus($("#mgmtAnnouncementStatus"), `실패했습니다. (${error.message || ""})`, true);
   }
@@ -271,6 +278,7 @@ async function setUserLimit(email, rawValue) {
     const u = allUsers.find(x => x.email === email);
     if (u) u.dailyTokenLimit = value;
     applyUserFilter();
+    loadAdminLog();
   } catch (error) {
     window.alert(`실패했습니다.\n${error.message || ""}`);
   }
@@ -282,6 +290,7 @@ async function clearUserLimit(email) {
     const u = allUsers.find(x => x.email === email);
     if (u) u.dailyTokenLimit = null;
     applyUserFilter();
+    loadAdminLog();
   } catch (error) {
     window.alert(`실패했습니다.\n${error.message || ""}`);
   }
@@ -309,6 +318,26 @@ async function loadUsers() {
   }
 }
 
+function formatLogTime(ts) {
+  if (!ts) return "";
+  return new Date(ts).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+async function loadAdminLog() {
+  const list = $("#mgmtLogList");
+  if (!list) return;
+  try {
+    const idToken = await currentUser.getIdToken();
+    const data = await callApi(idToken, "/api/management/log");
+    const log = Array.isArray(data.log) ? data.log : [];
+    list.innerHTML = log.length
+      ? log.slice(0, 50).map(entry => `<li><span class="mgmt-log-time">${escapeHtml(formatLogTime(entry.ts))} · ${escapeHtml(entry.email)}</span><span class="mgmt-log-action">${escapeHtml(entry.action)}</span>${entry.detail ? `<span class="mgmt-log-detail">${escapeHtml(entry.detail)}</span>` : ""}</li>`).join("")
+      : `<li class="mgmt-log-empty">아직 활동 기록이 없어요.</li>`;
+  } catch {
+    list.innerHTML = `<li class="mgmt-log-empty">불러오지 못했어요.</li>`;
+  }
+}
+
 async function loadAll() {
   try {
     await loadManagers();
@@ -319,6 +348,7 @@ async function loadAll() {
   loadLimit().catch(() => {});
   loadBanner().catch(() => {});
   loadUsers();
+  loadAdminLog();
 }
 
 $("#mgmtManagerAddBtn")?.addEventListener("click", addManager);
@@ -333,6 +363,7 @@ $("#mgmtAnnouncementSaveBtn")?.addEventListener("click", saveAnnouncement);
 ["mgmtAnnouncementEnabled", "mgmtAnnouncementTitleInput", "mgmtAnnouncementBodyInput", "mgmtAnnouncementColorInput", "mgmtAnnouncementImageInput", "mgmtAnnouncementLinkUrlInput", "mgmtAnnouncementLinkTextInput"]
   .forEach(id => $(`#${id}`)?.addEventListener("input", updateAnnouncementPreview));
 $("#mgmtUsersRefreshBtn")?.addEventListener("click", loadUsers);
+$("#mgmtLogRefreshBtn")?.addEventListener("click", loadAdminLog);
 $("#mgmtUsersSearchInput")?.addEventListener("input", applyUserFilter);
 
 async function handleLogout() { try { await authPersistenceReady; await signOut(auth); window.location.replace("../login/"); } catch (error) { window.alert(`로그아웃에 실패했습니다.\n${error.message || "잠시 후 다시 시도해주세요."}`); } }

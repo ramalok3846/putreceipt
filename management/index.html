@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 관리</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=3"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 관리</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=4"></head>
 <body>
 <header class="topbar"><a class="brand" href="../main/"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../preview/" class="logout settings-link">미리보기</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
 <main class="container mgmt-container">
@@ -12,6 +12,12 @@
 <section class="content-card">
   <div class="section-title"><div><p class="eyebrow blue-eyebrow">MANAGEMENT</p><h2>관리</h2></div></div>
   <p class="settings-hint">어드민 전용 페이지예요. 매니저, 이용 제한, AI 설정, 사용자 현황을 관리할 수 있어요.</p>
+</section>
+
+<section class="content-card">
+  <div class="section-title"><h2 >최근 관리 활동</h2><button id="mgmtLogRefreshBtn" class="ghost-btn" type="button">새로고침</button></div>
+  <p class="settings-hint">누가 언제 무엇을 바꿨는지 최근 활동을 볼 수 있어요.</p>
+  <ul id="mgmtLogList" class="mgmt-log-list"></ul>
 </section>
 
 <section class="content-card">
@@ -122,6 +128,6 @@
 </div>
 
 </main>
-<script type="module" src="app.js?v=4"></script>
+<script type="module" src="app.js?v=5"></script>
 <script type="module" src="../shared/notices.js?v=5"></script>
 </body></html>

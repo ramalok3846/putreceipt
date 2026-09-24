@@ -496,6 +496,8 @@ const DAILY_LIMIT_KV_KEY = "dailyTokenLimit";
 const BANNER_KV_KEY = "banner";
 const ANNOUNCEMENT_KV_KEY = "announcement";
 const USER_LIMITS_KV_KEY = "userLimits";
+const ADMIN_LOG_KV_KEY = "adminLog";
+const ADMIN_LOG_MAX_ENTRIES = 200;
 
 async function getKvValue(env, key) {
   if (!env.MANAGERS_KV) return null;
@@ -547,6 +549,17 @@ async function setDailyTokenLimit(env, value) { await env.MANAGERS_KV.put(DAILY_
 // 개인별 AI 하루 토큰 한도 재정의: { 이메일: 한도 } 형태로 저장.
 async function getUserLimits(env) { return (await getKvValue(env, USER_LIMITS_KV_KEY)) || {}; }
 async function setUserLimits(env, limits) { await setKvValue(env, USER_LIMITS_KV_KEY, limits); }
+
+// 오너/매니저가 관리 페이지에서 한 행동(매니저·차단 추가/삭제, 한도 변경,
+// 배너/공지 변경, PR 승인/거부 등)을 최근 것부터 최대 ADMIN_LOG_MAX_ENTRIES개
+// 남겨둡니다. 관리 페이지에서 "누가 언제 뭘 바꿨는지" 확인하는 용도입니다.
+async function getAdminLog(env) { return (await getKvValue(env, ADMIN_LOG_KV_KEY)) || []; }
+async function logAdminAction(env, email, action, detail) {
+  if (!env.MANAGERS_KV) return;
+  const current = await getAdminLog(env);
+  const updated = [{ ts: Date.now(), email: email || "알 수 없음", action, detail: detail || "" }, ...current].slice(0, ADMIN_LOG_MAX_ENTRIES);
+  await setKvValue(env, ADMIN_LOG_KV_KEY, updated);
+}
 
 // 로그인한 모든 페이지 상단에 뜨는 배너.
 const BANNER_SIZES = ["small", "medium", "large"];
@@ -620,7 +633,7 @@ async function handleAccessStatus(request, env) {
 
 // 관리(어드민) 페이지의 이메일 목록형 리소스(매니저/차단 목록) 공용 처리기 —
 // 오너만 조회/추가/삭제할 수 있습니다.
-async function handleEmailListEndpoint(request, env, { getList, setList, forbidOwnerEmail }) {
+async function handleEmailListEndpoint(request, env, { getList, setList, forbidOwnerEmail, logLabel }) {
   const cors = corsHeaders(request);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (request.method !== "POST") return jsonResponse(405, { error: "Method Not Allowed" }, cors);
@@ -629,7 +642,7 @@ async function handleEmailListEndpoint(request, env, { getList, setList, forbidO
   try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
   if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
 
-  const { role } = await checkRole(payload.idToken, env);
+  const { email: actorEmail, role } = await checkRole(payload.idToken, env);
   if (role !== "owner") return jsonResponse(403, { error: "오너만 볼 수 있습니다." }, cors);
 
   const ownerEmail = (env.OWNER_EMAIL || "").toLowerCase();
@@ -656,6 +669,7 @@ async function handleEmailListEndpoint(request, env, { getList, setList, forbidO
       updated = current.filter(e => e !== email);
     }
     await setList(env, updated);
+    await logAdminAction(env, actorEmail, `${logLabel} ${action === "add" ? "추가" : "삭제"}`, email);
     return jsonResponse(200, { owner: ownerEmail, list: updated }, cors);
   }
 
@@ -663,11 +677,11 @@ async function handleEmailListEndpoint(request, env, { getList, setList, forbidO
 }
 
 async function handleManagementManagers(request, env) {
-  return handleEmailListEndpoint(request, env, { getList: getManagerEmails, setList: setManagerEmails, forbidOwnerEmail: true });
+  return handleEmailListEndpoint(request, env, { getList: getManagerEmails, setList: setManagerEmails, forbidOwnerEmail: true, logLabel: "매니저" });
 }
 
 async function handleManagementBanned(request, env) {
-  return handleEmailListEndpoint(request, env, { getList: getBannedEmails, setList: setBannedEmails, forbidOwnerEmail: true });
+  return handleEmailListEndpoint(request, env, { getList: getBannedEmails, setList: setBannedEmails, forbidOwnerEmail: true, logLabel: "차단" });
 }
 
 // AI 하루 토큰 한도 조회/조정 — 오너 전용.
@@ -680,7 +694,7 @@ async function handleManagementSettings(request, env) {
   try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
   if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
 
-  const { role } = await checkRole(payload.idToken, env);
+  const { email: actorEmail, role } = await checkRole(payload.idToken, env);
   if (role !== "owner") return jsonResponse(403, { error: "오너만 볼 수 있습니다." }, cors);
 
   const action = payload.action || "get";
@@ -692,6 +706,7 @@ async function handleManagementSettings(request, env) {
     const value = Math.floor(Number(payload.dailyTokenLimit));
     if (!Number.isFinite(value) || value <= 0) return jsonResponse(400, { error: "1 이상의 숫자를 입력해주세요." }, cors);
     await setDailyTokenLimit(env, value);
+    await logAdminAction(env, actorEmail, "기본 AI 한도 변경", `${value.toLocaleString("ko-KR")} 토큰`);
     return jsonResponse(200, { dailyTokenLimit: value }, cors);
   }
   return jsonResponse(400, { error: "알 수 없는 action입니다." }, cors);
@@ -780,7 +795,7 @@ async function handleManagementNotices(request, env) {
   try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
   if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
 
-  const { role } = await checkRole(payload.idToken, env);
+  const { email: actorEmail, role } = await checkRole(payload.idToken, env);
   if (role !== "owner") return jsonResponse(403, { error: "오너만 볼 수 있습니다." }, cors);
 
   const action = payload.action || "get";
@@ -801,6 +816,7 @@ async function handleManagementNotices(request, env) {
     const size = BANNER_SIZES.includes(payload.size) ? payload.size : "medium";
     const banner = { enabled: !!payload.enabled, size, items, id: `${Date.now()}` };
     await setBanner(env, banner);
+    await logAdminAction(env, actorEmail, "배너 설정 변경", banner.enabled ? `켜짐 · 문구 ${items.length}개` : "꺼짐");
     return jsonResponse(200, { banner }, cors);
   }
 
@@ -819,6 +835,7 @@ async function handleManagementNotices(request, env) {
       id: `${Date.now()}`,
     };
     await setAnnouncement(env, announcement);
+    await logAdminAction(env, actorEmail, "공지 게시", announcement.enabled ? (announcement.title || "(제목 없음)") : "꺼짐");
     return jsonResponse(200, { announcement }, cors);
   }
 
@@ -835,7 +852,7 @@ async function handleManagementUserLimits(request, env) {
   try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
   if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
 
-  const { role } = await checkRole(payload.idToken, env);
+  const { email: actorEmail, role } = await checkRole(payload.idToken, env);
   if (role !== "owner") return jsonResponse(403, { error: "오너만 볼 수 있습니다." }, cors);
 
   const action = payload.action || "list";
@@ -853,14 +870,32 @@ async function handleManagementUserLimits(request, env) {
       const value = Math.floor(Number(payload.dailyTokenLimit));
       if (!Number.isFinite(value) || value <= 0) return jsonResponse(400, { error: "1 이상의 숫자를 입력해주세요." }, cors);
       limits[email] = value;
+      await logAdminAction(env, actorEmail, "개인 AI 한도 설정", `${email} → ${value.toLocaleString("ko-KR")} 토큰`);
     } else {
       delete limits[email];
+      await logAdminAction(env, actorEmail, "개인 AI 한도 해제", email);
     }
     await setUserLimits(env, limits);
     return jsonResponse(200, { limits }, cors);
   }
 
   return jsonResponse(400, { error: "알 수 없는 action입니다." }, cors);
+}
+
+// 관리 페이지 전용: 최근 관리 활동 로그 조회 — 오너만 가능.
+async function handleManagementLog(request, env) {
+  const cors = corsHeaders(request);
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  if (request.method !== "POST") return jsonResponse(405, { error: "Method Not Allowed" }, cors);
+
+  let payload;
+  try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
+  if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
+
+  const { role } = await checkRole(payload.idToken, env);
+  if (role !== "owner") return jsonResponse(403, { error: "오너만 볼 수 있습니다." }, cors);
+
+  return jsonResponse(200, { log: await getAdminLog(env) }, cors);
 }
 
 async function handlePrAction(request, env) {
@@ -881,7 +916,7 @@ async function handlePrAction(request, env) {
     return jsonResponse(400, { error: "필요한 값이 없습니다." }, cors);
   }
 
-  const { role } = await checkRole(idToken, env);
+  const { email: actorEmail, role } = await checkRole(idToken, env);
   if (!role) {
     return jsonResponse(403, { error: "이 작업을 수행할 권한이 없습니다." }, cors);
   }
@@ -902,6 +937,7 @@ async function handlePrAction(request, env) {
       });
       const data = await res.json();
       if (!res.ok) return jsonResponse(502, { error: data?.message || "병합에 실패했습니다." }, cors);
+      await logAdminAction(env, actorEmail, "업데이트 승인", `PR #${prNumber}`);
       return jsonResponse(200, { ok: true, merged: true }, cors);
     }
 
@@ -912,6 +948,7 @@ async function handlePrAction(request, env) {
     });
     const data = await res.json();
     if (!res.ok) return jsonResponse(502, { error: data?.message || "PR 닫기에 실패했습니다." }, cors);
+    await logAdminAction(env, actorEmail, "업데이트 거부", `PR #${prNumber}`);
     return jsonResponse(200, { ok: true, closed: true }, cors);
   } catch {
     return jsonResponse(502, { error: "GitHub 호출에 실패했습니다." }, cors);
@@ -932,6 +969,7 @@ export default {
     if (url.pathname === "/api/notices") return handleNotices(request, env);
     if (url.pathname === "/api/management/notices") return handleManagementNotices(request, env);
     if (url.pathname === "/api/management/user-limits") return handleManagementUserLimits(request, env);
+    if (url.pathname === "/api/management/log") return handleManagementLog(request, env);
     return env.ASSETS.fetch(request);
   },
 };

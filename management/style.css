@@ -29,3 +29,9 @@
 .mgmt-preview-label{margin:0 0 8px;font-size:12px;font-weight:800;color:#8a8d9f;text-transform:uppercase;letter-spacing:.04em}
 .mgmt-preview-box{background:#f1f1f6;border-radius:14px;padding:20px;display:flex;align-items:center;justify-content:center;min-height:180px}
 .mgmt-preview-box .pr-modal-card{box-shadow:none;max-width:none;width:100%;max-height:none;pointer-events:none}
+.mgmt-log-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto}
+.mgmt-log-list li{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:12px;color:#1f2130;background:#fafafd;display:flex;flex-direction:column;gap:3px}
+.mgmt-log-time{font-size:10px;color:#9a9cac}
+.mgmt-log-action{font-weight:800}
+.mgmt-log-detail{color:#5f6170}
+.mgmt-log-empty{text-align:center;color:#9a9cac;padding:14px;font-size:12px}
