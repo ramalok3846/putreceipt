@@ -7,7 +7,7 @@
 // GitHub Pages(정적 호스팅)는 서버 함수를 실행할 수 없어서, GitHub Pages 페이지도 이 Netlify
 // 함수를 원격으로 호출합니다. 그래서 다른 출처(origin)의 요청도 허용하는 CORS 헤더가 필요합니다.
 const DAILY_TOKEN_LIMIT = 50000;
-const DB_URL = "https://fir-2-f3b80-default-rtdb.asia-southeast1.firebasedatabase.app";
+const DB_URL = "https://pal-inte-db-default-rtdb.asia-southeast1.firebasedatabase.app";
 const ALLOWED_ORIGINS = new Set([
   "https://lagem1535-create.github.io",
   "https://melodic-dusk-f654e9.netlify.app",

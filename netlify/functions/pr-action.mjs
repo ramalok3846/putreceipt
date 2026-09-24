@@ -6,7 +6,7 @@ const OWNER = "lagem1535-create";
 const REPO = "putreceipt";
 // firebase-config.js에도 이미 있는 공개 웹 API 키입니다(비밀 값이 아님). ID 토큰이 진짜
 // 로그인된 사용자의 것인지 Firebase에게 직접 확인받는 데 씁니다.
-const FIREBASE_WEB_API_KEY = "AIzaSyCXqCgMZV-8bRwy3cqT21mFToAkd2o4kiA";
+const FIREBASE_WEB_API_KEY = "AIzaSyCEmf0KIiaF11nmS2CfBNA5yxZA9nrtmUU";
 
 async function verifyOwnerEmail(idToken) {
   const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_WEB_API_KEY}`, {

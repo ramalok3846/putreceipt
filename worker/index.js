@@ -5,7 +5,7 @@
 // 그 배포에 고정됩니다. 이미 배포된 버전이 있는 상태에서 새로 추가/수정하면,
 // 그 배포는 옛 값(또는 값 없음)을 계속 씁니다 — 새로 배포(새 커밋 push)해야 반영됩니다.
 const DAILY_TOKEN_LIMIT = 50000;
-const DB_URL = "https://fir-2-f3b80-default-rtdb.asia-southeast1.firebasedatabase.app";
+const DB_URL = "https://pal-inte-db-default-rtdb.asia-southeast1.firebasedatabase.app";
 const ALLOWED_ORIGINS = new Set([
   "https://lagem1535-create.github.io",
   "https://putreceipt.lagem1535.workers.dev",
@@ -13,7 +13,7 @@ const ALLOWED_ORIGINS = new Set([
 const OWNER = "lagem1535-create";
 const REPO = "putreceipt";
 // firebase-config.js에도 이미 있는 공개 웹 API 키입니다(비밀 값이 아님).
-const FIREBASE_WEB_API_KEY = "AIzaSyCXqCgMZV-8bRwy3cqT21mFToAkd2o4kiA";
+const FIREBASE_WEB_API_KEY = "AIzaSyCEmf0KIiaF11nmS2CfBNA5yxZA9nrtmUU";
 
 // 사용자에게는 "가벼움/보통/정밀/최대"만 보여주고, 실제 모델명·사고 토큰량은 서버에만 둡니다.
 const TIER_CONFIG = {
