@@ -15,4 +15,4 @@ binding = "ASSETS"
 # wrangler.toml 기준으로 덮어써지면서 바인딩이 사라지는 걸 막을 수 있습니다.
 [[kv_namespaces]]
 binding = "MANAGERS_KV"
-id = "ad7e21fa5c9b46688133f4e44757bfbe"
+id = "30c58ee828c44245aaea28f5294854f1"
