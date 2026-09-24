@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 설정</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=7"></head>
+<body>
+<header class="topbar"><a class="brand" href="../main/"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../assistant/" class="logout settings-link">AI</a><a href="../report/" class="logout settings-link">리포트</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
+<main class="container settings-container">
+<section class="content-card"><div class="section-title"><div><p class="eyebrow blue-eyebrow">SETTINGS</p><h2>설정</h2></div></div><p class="settings-hint">바꾼 내용은 아래 저장 버튼을 눌러야 반영됩니다.</p></section>
+
+<section class="content-card">
+<h3 class="settings-h3"><span class="settings-icon icon-acc">@</span>계정</h3>
+<label for="emailDisplay">이메일</label>
+<input id="emailDisplay" type="text" disabled>
+<label for="nicknameInput">닉네임</label>
+<input id="nicknameInput" type="text" placeholder="닉네임을 입력하세요" maxlength="30">
+</section>
+
+<section class="content-card">
+<h3 class="settings-h3"><span class="settings-icon icon-receipt">R</span>영수증 기본값</h3>
+<p class="settings-desc">영수증을 추가할 때 아래 값으로 미리 채워드려요.</p>
+<label for="defaultCategoryInput">기본 카테고리</label>
+<select id="defaultCategoryInput"><option>식비</option><option>카페</option><option>교통</option><option>생필품</option><option>쇼핑</option><option>의료</option><option>기타</option></select>
+<label for="defaultPaymentInput">기본 결제수단</label>
+<input id="defaultPaymentInput" type="text" placeholder="예: 신한카드 (비워두면 매번 직접 입력)">
+<label for="sortOrderInput">영수증 목록 정렬</label>
+<select id="sortOrderInput"><option value="newest">최신순</option><option value="oldest">오래된순</option><option value="amountHigh">금액 높은순</option><option value="amountLow">금액 낮은순</option></select>
+<label class="switch-row"><span>스캔한 영수증 사진 저장</span><input id="savePhotoInput" type="checkbox"></label>
+</section>
+
+<section class="content-card">
+<h3 class="settings-h3"><span class="settings-icon icon-budget">₩</span>월 예산</h3>
+<p class="settings-desc">한 달 지출 목표를 정하면 홈 화면에서 사용률을 보여드려요.</p>
+<label for="monthlyBudgetInput">월 예산 (원)</label>
+<input id="monthlyBudgetInput" type="number" inputmode="numeric" placeholder="예: 500000 (비워두면 표시 안 함)">
+</section>
+
+<section class="content-card">
+<h3 class="settings-h3"><span class="settings-icon icon-card">▦</span>홈 화면 요약 카드</h3>
+<label class="switch-row"><span>배너처럼 자동으로 넘기기</span><input id="cardBannerModeInput" type="checkbox"></label>
+<p class="settings-desc">화살표로 카드가 보이는 순서를 바꿀 수 있어요.</p>
+<ul id="cardOrderList" class="reorder-list"></ul>
+</section>
+
+<section class="content-card">
+<h3 class="settings-h3"><span class="settings-icon icon-ai">AI</span>AI 기능</h3>
+<label class="switch-row"><span>AI 검색 · AI 요약 · AI 채팅 사용</span><input id="aiEnabledInput" type="checkbox"></label>
+<p class="settings-desc">AI 검색은 이 기기에서 직접 실행돼요. AI 요약·채팅은 서버를 거쳐 답변을 생성하며, 계정당 하루 사용량 제한이 있어요.</p>
+<label for="aiTierInput">AI 답변 품질</label>
+<select id="aiTierInput"><option value="low">가벼움 (빠름)</option><option value="medium">보통</option><option value="high">정밀</option><option value="extreme">최대</option></select>
+<p class="settings-desc">품질이 높을수록 더 깊이 생각해서 답하지만, 하루 토큰 사용량을 더 많이 써요.</p>
+<label class="switch-row"><span>AI 채팅에서 영수증 등록/삭제 전 확인받기</span><input id="aiConfirmActionsInput" type="checkbox"></label>
+<p class="settings-desc">켜두면 AI가 영수증을 추가하거나 삭제하기 전에 먼저 물어보고, 확인해야 실제로 반영돼요. 꺼두면 AI가 바로 실행해요.</p>
+</section>
+
+<section class="content-card">
+<h3 class="settings-h3"><span class="settings-icon icon-alarm">!</span>환불·교환·보증 마감 알림</h3>
+<label class="switch-row"><span>마감 알림 사용</span><input id="notificationsEnabledInput" type="checkbox"></label>
+<label for="reminderDaysInput">마감 며칠 전부터 알려드릴까요?</label>
+<select id="reminderDaysInput"><option value="1">1일 전</option><option value="3">3일 전</option><option value="7">7일 전</option><option value="14">14일 전</option></select>
+</section>
+
+<section class="content-card">
+<h3 class="settings-h3"><span class="settings-icon icon-alarm">★</span>업데이트 소식</h3>
+<label class="switch-row"><span>새 기능 업데이트 소식 보기</span><input id="updatesEnabledInput" type="checkbox"></label>
+<p class="settings-desc"><a href="../update/">업데이트 소식 보러 가기 →</a></p>
+</section>
+
+<section id="adminBackgroundSection" class="content-card hidden">
+<h3 class="settings-h3"><span class="settings-icon icon-admin">A</span>어드민/매니저 전용</h3>
+<label class="switch-row"><span>관리자 화면 효과 쓰기</span><input id="adminBackgroundInput" type="checkbox"></label>
+<p class="settings-desc">켜두면 로그인한 모든 화면 테두리에 관리자 전용 그라데이션 효과가 나타나요. 다른 사용자에게는 영향이 없어요.</p>
+</section>
+
+<div class="settings-footer">
+<button id="saveSettingsBtn" class="settings-save" type="button">설정 저장</button>
+<p id="saveStatus" class="message"></p>
+</div>
+</main>
+<nav class="mobile-nav">
+  <a href="../main/" class="mobile-nav-item"><span class="mobile-nav-icon">⌂</span><span>홈</span></a>
+  <a href="../day/" class="mobile-nav-item"><span class="mobile-nav-icon">▤</span><span>기간별</span></a>
+  <a href="../assistant/" class="mobile-nav-item"><span class="mobile-nav-icon">AI</span><span>AI</span></a>
+  <a href="../report/" class="mobile-nav-item"><span class="mobile-nav-icon">R</span><span>리포트</span></a>
+  <a href="../setting/" class="mobile-nav-item active"><span class="mobile-nav-icon">⚙</span><span>설정</span></a>
+  <button id="mobileLogoutBtn" class="mobile-nav-item" type="button"><span class="mobile-nav-icon"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"></path><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path></svg></span><span>로그아웃</span></button>
+</nav>
+<script type="module" src="app.js?v=11"></script>
+<script type="module" src="../shared/notices.js?v=5"></script>
+</body></html>

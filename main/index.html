@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 홈</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="style.css?v=24"></head>
+<body>
+<header class="topbar"><a class="brand" href="./"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../assistant/" class="logout settings-link">AI</a><a href="../report/" class="logout settings-link">리포트</a><a href="../setting/" class="logout settings-link">설정</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
+<main class="container">
+<section class="hero"><div><p class="eyebrow">MY RECEIPTS</p><h1 id="welcomeMessage">안녕하세요!</h1><p id="userEmail" class="user-email"></p></div><button id="scanBtn" class="scan-btn" type="button">영수증 스캔</button></section>
+<section id="summaryGrid" class="summary-grid"><article class="summary-card" data-card="monthTotal"><span>이번 달 지출</span><strong id="monthTotal">0원</strong><small id="monthDelta" class="delta"></small><div id="budgetProgress" class="budget-progress hidden"><div class="budget-track"><div id="budgetFill" class="budget-fill"></div></div><small id="budgetText" class="budget-text"></small></div></article><article class="summary-card" data-card="receiptCount"><span>저장된 영수증</span><strong id="receiptCount">0장</strong></article><article class="summary-card" data-card="monthCount"><span>이번 달 영수증</span><strong id="monthCount">0장</strong></article></section>
+<div id="bannerDots" class="banner-dots hidden"></div>
+<section id="upcomingSection" class="content-card hidden"><div class="section-title"><div><p class="eyebrow blue-eyebrow">DEADLINES</p><h2>다가오는 환불·교환·보증 마감</h2></div><button id="notifyBtn" class="ghost-btn" type="button">알림 켜기</button></div><div id="upcomingList" class="upcoming-list"></div></section>
+<section class="content-card"><div class="section-title"><div><p class="eyebrow blue-eyebrow">SPENDING</p><h2>이번 달 지출 분석</h2></div><div class="tab-group"><span class="tab-indicator"></span><button class="tab-btn active" data-tab="category" type="button">카테고리</button><button class="tab-btn" data-tab="payment" type="button">결제수단</button></div></div><div id="breakdownList" class="category-breakdown"></div></section>
+<section class="content-card period-links"><div class="section-title"><div><p class="eyebrow blue-eyebrow">EXPENSE SUMMARY</p><h2>기간별로 모아보기</h2></div></div><div class="period-grid"><a href="../day/" class="period-card"><span class="period-icon">D</span><div><strong>일별</strong><small>오늘의 지출 확인</small></div><span class="arrow">›</span></a><a href="../week/" class="period-card"><span class="period-icon">W</span><div><strong>주별</strong><small>이번 주 소비 흐름</small></div><span class="arrow">›</span></a><a href="../month/" class="period-card"><span class="period-icon">M</span><div><strong>달별</strong><small>이번 달 지출 분석</small></div><span class="arrow">›</span></a><a href="../year/" class="period-card"><span class="period-icon">Y</span><div><strong>연별</strong><small>올해 소비 흐름</small></div><span class="arrow">›</span></a><a href="../report/" class="period-card"><span class="period-icon">R</span><div><strong>보고서</strong><small>경비 정산·PDF 내보내기</small></div><span class="arrow">›</span></a></div></section>
+<section class="toolbar"><div class="search-box"><button id="searchExecuteBtn" class="search-icon-btn" type="button" aria-label="검색">⌕</button><input id="searchInput" type="search" placeholder="가게명, 상품명, 결제수단으로 검색"></div><button id="aiSearchToggle" class="ghost-btn" type="button" aria-pressed="false">AI 검색</button><button id="filterToggle" class="ghost-btn" type="button">필터</button></section>
+<p id="aiSearchHint" class="ai-search-status hidden">AI 검색 켜짐 · "지난달 카페에서 5천원 넘게" 처럼 자연어로 입력해보세요.</p>
+<section id="filterPanel" class="filter-panel hidden">
+<div class="filter-row"><label>카테고리<select id="categoryFilter"><option value="all">전체 카테고리</option><option value="식비">식비</option><option value="카페">카페</option><option value="교통">교통</option><option value="생필품">생필품</option><option value="쇼핑">쇼핑</option><option value="의료">의료</option><option value="기타">기타</option></select></label><label>결제수단<select id="paymentFilter"><option value="all">전체 결제수단</option></select></label></div>
+<div class="filter-row"><label>시작일<input id="dateFromInput" type="date"></label><label>종료일<input id="dateToInput" type="date"></label></div>
+<div class="filter-row"><label>최소 금액<input id="minAmountInput" type="number" inputmode="numeric" placeholder="0"></label><label>최대 금액<input id="maxAmountInput" type="number" inputmode="numeric" placeholder="제한 없음"></label></div>
+<div class="filter-row filter-row-single"><label>문서 종류<select id="docTypeFilter"><option value="all">전체 문서</option><option value="receipt">영수증</option><option value="medicine">약 봉투</option><option value="warranty">보증서</option></select></label></div>
+<label class="filter-check"><input id="settlementFilterInput" type="checkbox"><span>정산 대상만 보기</span></label>
+<div class="filter-actions"><button id="resetFilters" class="ghost-btn" type="button">초기화</button><button id="exportBtn" class="ghost-btn" type="button">CSV로 내보내기</button></div>
+</section>
+<section class="content-card"><div class="section-title"><div><p class="eyebrow blue-eyebrow">RECENT</p><h2>최근 영수증</h2></div></div><div id="receiptList" class="receipt-list"></div></section>
+</main>
+
+<div id="scanModal" class="modal hidden"><div class="modal-card"><button id="closeModal" class="close" type="button" aria-label="닫기">×</button><p class="modal-eyebrow">NEW RECEIPT</p><h2>영수증 추가</h2><p>사진을 올리면 상호명·금액·날짜를 자동으로 읽어옵니다. 확인 후 저장하세요.</p>
+
+<div class="scan-box">
+  <label for="photoInput" id="photoDrop" class="photo-drop"><img id="photoPreview" class="hidden" alt="영수증 미리보기"><span id="photoDropText">영수증 사진 선택 / 촬영 (PDF도 가능)</span></label>
+  <input id="photoInput" type="file" accept="image/*,application/pdf" capture="environment" class="hidden">
+  <button id="recognizeBtn" class="secondary-btn" type="button" disabled>자동 인식하기</button>
+  <p id="ocrStatus" class="ocr-status"></p>
+</div>
+
+<select id="docTypeInput"><option value="receipt">영수증</option><option value="medicine">약 봉투</option><option value="warranty">보증서</option></select>
+<input id="storeInput" placeholder="가게명">
+<input id="amountInput" type="number" inputmode="numeric" placeholder="금액">
+<select id="categoryInput"><option>식비</option><option>카페</option><option>교통</option><option>생필품</option><option>쇼핑</option><option>의료</option><option>기타</option></select>
+<input id="itemInput" placeholder="상품명 (선택)">
+<input id="paymentMethodInput" placeholder="결제수단 (선택, 예: 신한카드, 현금)">
+<input id="dateInput" type="date">
+<input id="timeInput" type="time">
+
+<div class="deadline-fields"><p class="deadline-title" id="deadlineTitle">환불·교환·보증기간 (선택)</p><div class="deadline-grid"><input id="refundDaysInput" type="number" inputmode="numeric" placeholder="환불(일)"><input id="exchangeDaysInput" type="number" inputmode="numeric" placeholder="교환(일)"><input id="warrantyMonthsInput" type="number" inputmode="numeric" placeholder="보증(개월)"></div></div>
+<label class="settlement-check"><input id="settlementInput" type="checkbox"><span>경비 정산 대상</span></label>
+
+<button id="saveReceipt" class="primary" type="button">영수증 저장</button>
+</div></div>
+
+<div id="editModal" class="modal hidden"><div class="modal-card"><button id="closeEditModal" class="close" type="button" aria-label="닫기">×</button><p class="modal-eyebrow">EDIT RECEIPT</p><h2>영수증 수정</h2><p>날짜와 시간을 수정하면 해당 일별 리포트에도 바로 반영됩니다.</p>
+<img id="editPhotoPreview" class="edit-photo hidden" alt="영수증 사진">
+<select id="editDocTypeInput"><option value="receipt">영수증</option><option value="medicine">약 봉투</option><option value="warranty">보증서</option></select>
+<input id="editStoreInput" placeholder="가게명">
+<input id="editAmountInput" type="number" inputmode="numeric" placeholder="금액">
+<select id="editCategoryInput"><option>식비</option><option>카페</option><option>교통</option><option>생필품</option><option>쇼핑</option><option>의료</option><option>기타</option></select>
+<input id="editItemInput" placeholder="상품명">
+<input id="editPaymentMethodInput" placeholder="결제수단 (선택, 예: 신한카드, 현금)">
+<input id="editDateInput" type="date">
+<input id="editTimeInput" type="time">
+<div class="deadline-fields"><p class="deadline-title" id="editDeadlineTitle">환불·교환·보증기간 (선택)</p><div class="deadline-grid"><input id="editRefundDaysInput" type="number" inputmode="numeric" placeholder="환불(일)"><input id="editExchangeDaysInput" type="number" inputmode="numeric" placeholder="교환(일)"><input id="editWarrantyMonthsInput" type="number" inputmode="numeric" placeholder="보증(개월)"></div></div>
+<label class="settlement-check"><input id="editSettlementInput" type="checkbox"><span>경비 정산 대상</span></label>
+<div class="modal-actions"><button id="cancelEdit" class="secondary" type="button">취소</button><button id="updateReceipt" class="primary" type="button">수정 저장</button></div>
+</div></div>
+
+<div id="photoModal" class="modal hidden"><div class="lightbox"><button id="closePhotoModal" class="close" type="button" aria-label="닫기">×</button><img id="lightboxImage" alt="영수증 사진 확대"></div></div>
+
+<nav class="mobile-nav">
+  <a href="./" class="mobile-nav-item active"><span class="mobile-nav-icon">⌂</span><span>홈</span></a>
+  <a href="../day/" class="mobile-nav-item"><span class="mobile-nav-icon">▤</span><span>기간별</span></a>
+  <button id="mobileScanBtn" class="mobile-scan-fab" type="button" aria-label="영수증 스캔">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="14" r="3.5"></circle></svg>
+  </button>
+  <a href="../assistant/" class="mobile-nav-item"><span class="mobile-nav-icon">AI</span><span>AI</span></a>
+  <a href="../report/" class="mobile-nav-item"><span class="mobile-nav-icon">R</span><span>리포트</span></a>
+  <a href="../setting/" class="mobile-nav-item"><span class="mobile-nav-icon">⚙</span><span>설정</span></a>
+  <button id="mobileLogoutBtn" class="mobile-nav-item" type="button"><span class="mobile-nav-icon"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"></path><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path></svg></span><span>로그아웃</span></button>
+</nav>
+<script type="module" src="app.js?v=22"></script>
+<script type="module" src="../shared/notices.js?v=5"></script>
+</body></html>

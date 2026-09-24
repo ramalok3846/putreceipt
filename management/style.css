@@ -1,0 +1,31 @@
+.mgmt-container{max-width:760px}
+.mgmt-role-group{margin-top:16px}
+.mgmt-role-label{margin:0 0 8px;font-size:12px;font-weight:800;color:#8a8d9f;text-transform:uppercase;letter-spacing:.04em}
+.mgmt-role-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.mgmt-role-list li{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;color:#1f2130;background:#fafafd;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mgmt-remove-btn{border:0;background:none;color:#e0245e;font-weight:700;font-size:12px;cursor:pointer;padding:4px 6px;flex-shrink:0}
+.mgmt-remove-btn:hover{text-decoration:underline}
+.mgmt-add-row{display:flex;gap:8px;margin-top:10px}
+.mgmt-add-row input{flex:1;height:47px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;box-sizing:border-box}
+.mgmt-add-row .ghost-btn{flex-shrink:0}
+.mgmt-users-table-wrap{overflow-x:auto;margin-top:12px}
+.mgmt-users-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+.mgmt-users-table th,.mgmt-users-table td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left}
+.mgmt-users-table th{color:#8a8d9f;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+.mgmt-toggle-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#1f2130;margin:4px 0 10px}
+.mgmt-toggle-row input{width:17px;height:17px}
+.mgmt-full-input{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:13px;font-family:inherit;margin-top:8px}
+.mgmt-textarea{min-height:90px;resize:vertical;line-height:1.6}
+.mgmt-user-limit-cell{display:flex;align-items:center;gap:6px}
+.mgmt-user-limit-cell input{width:90px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;font-family:inherit;box-sizing:border-box}
+.mgmt-user-limit-cell button{border:0;background:none;color:var(--blue);font-weight:700;font-size:11px;cursor:pointer;padding:2px 4px;white-space:nowrap}
+.mgmt-user-limit-cell button:hover{text-decoration:underline}
+.mgmt-user-limit-cell .mgmt-clear-limit-btn{color:#e0245e}
+.mgmt-announcement-layout{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.mgmt-announcement-fields{flex:1;min-width:240px}
+.mgmt-color-row{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;font-weight:700;color:#1f2130}
+.mgmt-color-row input{width:44px;height:32px;border:1px solid var(--line);border-radius:8px;padding:2px;cursor:pointer}
+.mgmt-announcement-preview{width:260px;flex-shrink:0}
+.mgmt-preview-label{margin:0 0 8px;font-size:12px;font-weight:800;color:#8a8d9f;text-transform:uppercase;letter-spacing:.04em}
+.mgmt-preview-box{background:#f1f1f6;border-radius:14px;padding:20px;display:flex;align-items:center;justify-content:center;min-height:180px}
+.mgmt-preview-box .pr-modal-card{box-shadow:none;max-width:none;width:100%;max-height:none;pointer-events:none}

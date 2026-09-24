@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 관리</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=3"></head>
+<body>
+<header class="topbar"><a class="brand" href="../main/"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../preview/" class="logout settings-link">미리보기</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
+<main class="container mgmt-container">
+
+<section id="mgmtNoAccessNotice" class="content-card hidden"><p class="assistant-disabled-text">이 페이지를 볼 수 있는 권한이 없어요.</p></section>
+
+<div id="mgmtRoot" class="hidden">
+
+<section class="content-card">
+  <div class="section-title"><div><p class="eyebrow blue-eyebrow">MANAGEMENT</p><h2>관리</h2></div></div>
+  <p class="settings-hint">어드민 전용 페이지예요. 매니저, 이용 제한, AI 설정, 사용자 현황을 관리할 수 있어요.</p>
+</section>
+
+<section class="content-card">
+  <div class="section-title"><h2 >매니저</h2></div>
+  <p class="settings-hint">오너와 동일한 권한(프리뷰 승인/거부)을 가져요.</p>
+  <div class="mgmt-role-group">
+    <p class="mgmt-role-label">오너</p>
+    <ul id="mgmtOwnerList" class="mgmt-role-list"></ul>
+  </div>
+  <div class="mgmt-role-group">
+    <p class="mgmt-role-label">매니저</p>
+    <ul id="mgmtManagerList" class="mgmt-role-list"></ul>
+    <div class="mgmt-add-row">
+      <input id="mgmtManagerAddInput" type="email" placeholder="추가할 매니저 이메일">
+      <button id="mgmtManagerAddBtn" class="ghost-btn" type="button">추가</button>
+    </div>
+    <p id="mgmtManagerStatus" class="ai-search-status hidden"></p>
+  </div>
+</section>
+
+<section class="content-card">
+  <div class="section-title"><h2 >이용 제한</h2></div>
+  <p class="settings-hint">차단된 이메일은 로그인과 AI 기능을 쓸 수 없어요.</p>
+  <div class="mgmt-role-group">
+    <p class="mgmt-role-label">차단된 이메일</p>
+    <ul id="mgmtBannedList" class="mgmt-role-list"></ul>
+    <div class="mgmt-add-row">
+      <input id="mgmtBannedAddInput" type="email" placeholder="차단할 이메일">
+      <button id="mgmtBannedAddBtn" class="ghost-btn" type="button">차단</button>
+    </div>
+    <p id="mgmtBannedStatus" class="ai-search-status hidden"></p>
+  </div>
+</section>
+
+<section class="content-card">
+  <div class="section-title"><h2 >AI 설정</h2></div>
+  <p class="settings-hint">한 사람이 하루에 쓸 수 있는 AI 토큰 한도예요. (기본값)</p>
+  <div class="mgmt-add-row">
+    <input id="mgmtLimitInput" type="number" inputmode="numeric" min="1" placeholder="예: 50000">
+    <button id="mgmtLimitSaveBtn" class="ghost-btn" type="button">저장</button>
+  </div>
+  <p id="mgmtLimitStatus" class="ai-search-status hidden"></p>
+</section>
+
+<section class="content-card">
+  <div class="section-title"><h2 >상단 배너</h2></div>
+  <p class="settings-hint">켜두면 로그인한 모든 페이지 맨 위에 떠요. 문구를 여러 개 넣으면 자동으로 돌아가면서 보여줘요 (최대 5개).</p>
+  <label class="mgmt-toggle-row"><input id="mgmtBannerEnabled" type="checkbox"><span>배너 켜기</span></label>
+  <div class="mgmt-color-row">
+    <label for="mgmtBannerSizeInput">크기</label>
+    <select id="mgmtBannerSizeInput">
+      <option value="small">작게</option>
+      <option value="medium" selected>보통</option>
+      <option value="large">크게</option>
+    </select>
+  </div>
+  <ul id="mgmtBannerItemsList" class="mgmt-role-list"></ul>
+  <div class="mgmt-add-row">
+    <input id="mgmtBannerItemInput" type="text" placeholder="배너 문구 추가" maxlength="300">
+    <button id="mgmtBannerAddItemBtn" class="ghost-btn" type="button">추가</button>
+  </div>
+  <div class="mgmt-add-row">
+    <button id="mgmtBannerSaveBtn" class="ghost-btn" type="button">저장</button>
+  </div>
+  <p id="mgmtBannerStatus" class="ai-search-status hidden"></p>
+</section>
+
+<section class="content-card">
+  <div class="section-title"><h2 >공지 (들어올 때 한 번)</h2></div>
+  <p class="settings-hint">켜두면 사용자가 앱에 들어올 때 팝업으로 한 번 보여줘요. 저장할 때마다 다시 보여줘요. 내용에 **이렇게** 쓰면 굵게 나와요.</p>
+  <div class="mgmt-announcement-layout">
+    <div class="mgmt-announcement-fields">
+      <label class="mgmt-toggle-row"><input id="mgmtAnnouncementEnabled" type="checkbox"><span>공지 켜기</span></label>
+      <input id="mgmtAnnouncementTitleInput" type="text" placeholder="공지 제목" maxlength="100" class="mgmt-full-input">
+      <textarea id="mgmtAnnouncementBodyInput" placeholder="공지 내용 (**굵게** 지원)" maxlength="2000" class="mgmt-full-input mgmt-textarea"></textarea>
+      <div class="mgmt-color-row">
+        <label for="mgmtAnnouncementColorInput">색상</label>
+        <input id="mgmtAnnouncementColorInput" type="color" value="#6d3df2">
+      </div>
+      <input id="mgmtAnnouncementImageInput" type="url" placeholder="이미지 주소 (선택, https://…)" maxlength="500" class="mgmt-full-input">
+      <input id="mgmtAnnouncementLinkUrlInput" type="url" placeholder="링크 주소 (선택, https://…)" maxlength="500" class="mgmt-full-input">
+      <input id="mgmtAnnouncementLinkTextInput" type="text" placeholder="링크 버튼 문구 (선택, 예: 자세히 보기)" maxlength="40" class="mgmt-full-input">
+      <div class="mgmt-add-row">
+        <button id="mgmtAnnouncementSaveBtn" class="ghost-btn" type="button">게시</button>
+      </div>
+      <p id="mgmtAnnouncementStatus" class="ai-search-status hidden"></p>
+    </div>
+    <div class="mgmt-announcement-preview">
+      <p class="mgmt-preview-label">미리보기</p>
+      <div id="mgmtAnnouncementPreview" class="mgmt-preview-box"></div>
+    </div>
+  </div>
+</section>
+
+<section class="content-card">
+  <div class="section-title"><h2 >사용자 현황</h2><button id="mgmtUsersRefreshBtn" class="ghost-btn" type="button">새로고침</button></div>
+  <p class="settings-hint">이메일을 검색해서 특정 사용자만 AI 한도를 다르게 설정할 수 있어요.</p>
+  <input id="mgmtUsersSearchInput" type="search" placeholder="이메일로 검색" class="mgmt-full-input">
+  <p id="mgmtUsersNotice" class="settings-hint hidden"></p>
+  <div id="mgmtUsersTableWrap" class="mgmt-users-table-wrap hidden">
+    <table class="mgmt-users-table">
+      <thead><tr><th>이메일</th><th>가입일</th><th>최근 로그인</th><th>로그인 횟수</th><th>영수증 수</th><th>개인 AI 한도</th></tr></thead>
+      <tbody id="mgmtUsersBody"></tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+
+</main>
+<script type="module" src="app.js?v=4"></script>
+<script type="module" src="../shared/notices.js?v=5"></script>
+</body></html>

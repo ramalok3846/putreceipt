@@ -1,0 +1,25 @@
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;color:#171827;background:#f7f7fb;background-image:radial-gradient(720px 420px at 15% -10%,rgba(109,61,242,.16),transparent 60%),radial-gradient(640px 380px at 110% 10%,rgba(79,70,229,.12),transparent 55%)}
+.login-card{width:min(100%,400px);padding:38px 34px;background:#fff;border:1px solid #ececf3;border-radius:22px;box-shadow:0 20px 50px rgba(30,20,80,.08)}
+.brand-mark{width:52px;height:52px;margin:0 auto 16px;border-radius:15px;background:#6d3df2;color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900}
+.logo{margin:0;text-align:center;font-size:22px;font-weight:900;letter-spacing:-.6px;color:#171827}
+.subtitle{margin:8px 0 28px;text-align:center;color:#85889a;font-size:13px}
+label{display:block;margin:14px 0 7px;font-size:12px;font-weight:750;color:#4b4d5c}
+input{width:100%;padding:13px 15px;border:1px solid #ececf3;border-radius:10px;background:#fafafe;color:#171827;font-size:14px;outline:none;transition:.15s}
+input:focus{border-color:#6d3df2;box-shadow:0 0 0 3px rgba(109,61,242,.12);background:#fff}
+form button{width:100%;margin-top:20px;padding:14px;border:0;border-radius:10px;background:#6d3df2;color:#fff;font-size:14px;font-weight:850;cursor:pointer;transition:.15s}
+form button:hover{background:#5b2fe0}
+.actions{display:grid;gap:8px;margin-top:8px}
+.secondary-link{display:block;width:100%;margin-top:12px;padding:13px;border:1px solid #ececf3;border-radius:10px;background:#fafafe;color:#6d3df2;text-align:center;text-decoration:none;font-size:14px;font-weight:750}
+.secondary-link:hover{background:#f2effe}
+button.text-btn{margin-top:4px;background:transparent;color:#85889a;font-weight:600;box-shadow:none;padding:6px;font-size:12px}
+.message{min-height:20px;margin:16px 0 0;text-align:center;font-size:12px}
+.message.success{color:#19905a}
+.message.error{color:#c24141}
+@media(max-width:480px){
+  body{padding:16px}
+  .login-card{padding:28px 22px;border-radius:18px}
+  .brand-mark{width:46px;height:46px;font-size:20px;border-radius:13px}
+  .logo{font-size:20px}
+  .subtitle{margin-bottom:22px;font-size:12px}
+}

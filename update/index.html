@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 업데이트 소식</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=1"></head>
+<body>
+<header class="topbar"><a class="brand" href="../main/"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../assistant/" class="logout settings-link">AI</a><a href="../report/" class="logout settings-link">리포트</a><a href="../setting/" class="logout settings-link">설정</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
+<main class="container update-container">
+
+<section class="content-card"><div class="section-title"><div><p class="eyebrow blue-eyebrow">UPDATES</p><h2>업데이트 소식</h2></div></div><p class="settings-hint">영수증모아에 어떤 기능이 추가됐는지 확인하세요.</p></section>
+
+<section id="updatesDisabledNotice" class="content-card hidden">
+  <p class="assistant-disabled-text">업데이트 소식이 꺼져 있어요. <a href="../setting/">설정</a>에서 켤 수 있어요.</p>
+</section>
+
+<div id="updateList" class="update-list"></div>
+
+</main>
+
+<nav class="mobile-nav">
+  <a href="../main/" class="mobile-nav-item"><span class="mobile-nav-icon">⌂</span><span>홈</span></a>
+  <a href="../day/" class="mobile-nav-item"><span class="mobile-nav-icon">▤</span><span>기간별</span></a>
+  <a href="../assistant/" class="mobile-nav-item"><span class="mobile-nav-icon">AI</span><span>AI</span></a>
+  <a href="../report/" class="mobile-nav-item"><span class="mobile-nav-icon">R</span><span>리포트</span></a>
+  <a href="../setting/" class="mobile-nav-item"><span class="mobile-nav-icon">⚙</span><span>설정</span></a>
+  <button id="mobileLogoutBtn" class="mobile-nav-item" type="button"><span class="mobile-nav-icon"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"></path><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path></svg></span><span>로그아웃</span></button>
+</nav>
+<script type="module" src="app.js?v=1"></script>
+<script type="module" src="../shared/notices.js?v=5"></script>
+</body></html>

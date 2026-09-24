@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 지출 보고서</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=5"></head>
+<body>
+<header class="topbar"><a class="brand" href="../main/"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../assistant/" class="logout settings-link">AI</a><a href="../report/" class="logout settings-link active">리포트</a><a href="../setting/" class="logout settings-link">설정</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
+<main class="container report-container">
+
+<section class="content-card report-doc-header">
+<div class="section-title"><div><p class="eyebrow blue-eyebrow">REPORT</p><h2>지출 보고서</h2></div></div>
+<p class="settings-hint">기간을 골라 경비 정산이나 제출용 보고서를 만들 수 있어요.</p>
+<dl class="report-meta">
+  <div class="report-meta-item"><dt>작성일</dt><dd id="reportIssueDate">-</dd></div>
+  <div class="report-meta-item"><dt>대상 기간</dt><dd id="reportPeriodLabel">-</dd></div>
+  <div class="report-meta-item"><dt>작성자</dt><dd id="reportAuthor">-</dd></div>
+</dl>
+</section>
+
+<section class="content-card">
+<div class="report-presets">
+  <button class="preset-btn active" data-preset="thisMonth" type="button">이번 달</button>
+  <button class="preset-btn" data-preset="lastMonth" type="button">지난 달</button>
+  <button class="preset-btn" data-preset="thisYear" type="button">올해</button>
+  <button class="preset-btn" data-preset="all" type="button">전체</button>
+</div>
+<div class="filter-row report-range">
+  <label>시작일<input id="rangeFrom" type="date"></label>
+  <label>종료일<input id="rangeTo" type="date"></label>
+</div>
+<div class="report-settlement-row">
+  <label class="filter-check"><input id="settlementOnlyInput" type="checkbox"><span>정산 대상만 보기</span></label>
+  <span id="reportSettlementSummary" class="report-settlement-summary"></span>
+</div>
+</section>
+
+<section class="content-card">
+<div class="section-title"><h2 class="report-h2">AI 지출 요약</h2><button id="aiSummaryBtn" class="ghost-btn" type="button">AI 요약 생성</button></div>
+<p id="reportSummaryText" class="report-summary-text">요약을 준비하고 있습니다...</p>
+<p id="aiSummaryStatus" class="ai-search-status hidden"></p>
+</section>
+
+<section class="content-card report-summary">
+<div class="report-stat"><span>총 지출</span><strong id="reportTotal">0원</strong></div>
+<div class="report-stat"><span>영수증 수</span><strong id="reportCount">0장</strong></div>
+<div class="report-stat"><span>평균 결제</span><strong id="reportAvg">0원</strong></div>
+</section>
+
+<section class="content-card">
+<div class="section-title"><h2 class="report-h2">카테고리별 지출</h2></div>
+<div id="reportCategoryBreakdown" class="category-breakdown"></div>
+</section>
+
+<section class="content-card">
+<div class="section-title"><h2 class="report-h2">결제수단별 지출</h2></div>
+<div id="reportPaymentBreakdown" class="category-breakdown"></div>
+</section>
+
+<section class="content-card">
+<div class="section-title"><h2 class="report-h2">영수증 내역</h2><div class="report-actions"><button id="printReportBtn" class="ghost-btn" type="button">인쇄 / PDF 저장</button><button id="exportReportPdfBtn" class="ghost-btn" type="button">PDF 다운로드</button><button id="exportReportXlsxBtn" class="ghost-btn" type="button">엑셀 다운로드</button><button id="exportReportPptxBtn" class="ghost-btn" type="button">PPT 다운로드</button><button id="exportReportCsvBtn" class="ghost-btn" type="button">CSV 내보내기</button></div></div>
+<div class="report-table-wrap">
+<table class="report-table">
+<thead><tr><th>날짜</th><th>가게명</th><th>카테고리</th><th>문서</th><th>결제수단</th><th class="num">금액</th></tr></thead>
+<tbody id="reportTableBody"></tbody>
+<tfoot><tr><td colspan="5">합계</td><td class="num" id="reportTableTotal">0원</td></tr></tfoot>
+</table>
+</div>
+</section>
+
+</main>
+
+<nav class="mobile-nav">
+  <a href="../main/" class="mobile-nav-item"><span class="mobile-nav-icon">⌂</span><span>홈</span></a>
+  <a href="../day/" class="mobile-nav-item"><span class="mobile-nav-icon">▤</span><span>기간별</span></a>
+  <a href="../assistant/" class="mobile-nav-item"><span class="mobile-nav-icon">AI</span><span>AI</span></a>
+  <a href="../report/" class="mobile-nav-item active"><span class="mobile-nav-icon">R</span><span>리포트</span></a>
+  <a href="../setting/" class="mobile-nav-item"><span class="mobile-nav-icon">⚙</span><span>설정</span></a>
+  <button id="mobileLogoutBtn" class="mobile-nav-item" type="button"><span class="mobile-nav-icon"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"></path><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path></svg></span><span>로그아웃</span></button>
+</nav>
+<script type="module" src="app.js?v=13"></script>
+<script type="module" src="../shared/notices.js?v=5"></script>
+</body></html>

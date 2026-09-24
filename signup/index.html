@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>영수증모아 - 회원가입</title>
+  <link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아">
+  <link rel="stylesheet" href="../login/style.css?v=7">
+</head>
+<body>
+  <main class="login-card">
+    <div class="brand-mark">₩</div>
+    <h1 class="logo">영수증모아</h1>
+    <p class="subtitle">새 계정을 만들어 영수증을 관리해보세요.</p>
+    <form id="signupForm">
+      <label for="nickname">닉네임</label>
+      <input id="nickname" type="text" placeholder="닉네임을 입력하세요" autocomplete="nickname" required maxlength="30">
+      <label for="email">이메일</label>
+      <input id="email" type="email" placeholder="이메일을 입력하세요" autocomplete="email" required>
+      <label for="password">비밀번호</label>
+      <input id="password" type="password" placeholder="비밀번호 6자 이상" autocomplete="new-password" minlength="6" required>
+      <button type="submit">회원가입</button>
+    </form>
+    <div class="actions">
+      <a class="secondary-link" href="../login/">로그인으로 돌아가기</a>
+    </div>
+    <p id="message" class="message"></p>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - 업데이트 미리보기</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=1"></head>
+<body>
+<header class="topbar"><a class="brand" href="../main/"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../management/" class="logout settings-link">관리</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
+<main class="container preview-container">
+
+<section id="previewNoAccessNotice" class="content-card hidden"><p class="assistant-disabled-text">이 페이지를 볼 수 있는 권한이 없어요.</p></section>
+
+<section id="previewHeaderCard" class="content-card hidden"><div class="section-title"><div><p class="eyebrow blue-eyebrow">PREVIEW</p><h2 id="previewTitle">업데이트 미리보기</h2></div></div><p id="previewSummary" class="settings-hint"></p></section>
+
+<section id="previewNoneNotice" class="content-card hidden"><p class="assistant-disabled-text">지금은 검토 대기 중인 업데이트가 없어요.</p></section>
+
+<section id="previewCard" class="content-card hidden">
+  <ul id="previewFeatures" class="preview-features"></ul>
+  <div id="previewImages" class="preview-images"></div>
+  <div class="preview-actions">
+    <button id="approveBtn" class="preview-approve" type="button">✓ 승인 (자동 병합)</button>
+    <button id="rejectBtn" class="preview-reject" type="button">✕ 거부 (반영 안 함)</button>
+  </div>
+  <p id="previewStatus" class="ai-search-status hidden"></p>
+</section>
+
+</main>
+<script type="module" src="app.js?v=4"></script>
+<script type="module" src="../shared/notices.js?v=5"></script>
+</body></html>

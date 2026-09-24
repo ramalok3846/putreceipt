@@ -1,0 +1,11 @@
+.preview-container{max-width:640px}
+.preview-features{margin:0 0 12px;padding-left:20px;font-size:13px;line-height:1.8;color:#4b4d5c}
+.preview-images{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.preview-images img{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+.preview-actions{display:flex;gap:10px}
+.preview-approve,.preview-reject{flex:1;height:47px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px;border:0}
+.preview-approve{background:#1f9d55;color:#fff}
+.preview-approve:hover{background:#188245}
+.preview-reject{background:#fff;color:#e0245e;border:1px solid #f3c6d3}
+.preview-reject:hover{background:#fdeef2}
+.preview-approve:disabled,.preview-reject:disabled{opacity:.55;cursor:default}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>영수증모아 - AI 비서</title><link rel="manifest" href="../manifest.json"><meta name="theme-color" content="#6d3df2"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="영수증모아"><link rel="stylesheet" href="../main/style.css?v=24"><link rel="stylesheet" href="style.css?v=3"></head>
+<body>
+<header class="topbar"><a class="brand" href="../main/"><span class="brand-mark">₩</span><span>영수증모아</span></a><div class="topbar-spacer"></div><a href="../report/" class="logout settings-link">리포트</a><a href="../setting/" class="logout settings-link">설정</a><button id="logoutBtn" class="logout" type="button">로그아웃</button></header>
+<main class="container assistant-container">
+
+<section class="content-card"><div class="section-title"><div><p class="eyebrow blue-eyebrow">AI</p><h2>AI 비서</h2></div></div><p class="settings-hint">내 영수증 데이터를 바탕으로 지출에 대해 물어볼 수 있어요.</p></section>
+
+<section id="aiDisabledNotice" class="content-card hidden">
+  <p class="assistant-disabled-text">AI 기능이 꺼져 있어요. <a href="../setting/">설정</a>에서 AI 기능을 켜면 사용할 수 있어요.</p>
+</section>
+
+<section id="aiChatCard" class="content-card assistant-card hidden">
+  <div class="section-title">
+    <h2 class="report-h2">대화</h2>
+    <div class="chat-header-actions">
+      <button id="toggleConvListBtn" class="ghost-btn" type="button">대화 목록</button>
+      <button id="newConvBtn" class="ghost-btn" type="button">새 대화</button>
+    </div>
+  </div>
+
+  <ul id="convList" class="conv-list hidden"></ul>
+
+  <div class="chat-tier-row">
+    <span class="chat-tier-label">AI 답변 품질</span>
+    <div id="tierButtons" class="tier-buttons">
+      <button class="tier-btn" data-tier="low" type="button">가벼움</button>
+      <button class="tier-btn" data-tier="medium" type="button">보통</button>
+      <button class="tier-btn" data-tier="high" type="button">정밀</button>
+      <button class="tier-btn" data-tier="extreme" type="button">최대</button>
+    </div>
+  </div>
+
+  <div id="chatMessages" class="chat-messages"></div>
+  <p id="chatStatus" class="ai-search-status hidden"></p>
+
+  <div class="chat-usage-row">
+    <div class="chat-usage-track"><div id="chatUsageFill" class="chat-usage-fill" style="width:0%"></div></div>
+    <span id="chatUsageText" class="chat-usage-text"></span>
+  </div>
+
+  <div class="chat-input-row">
+    <input id="chatInput" type="text" placeholder="예: 이번 달 카페에서 얼마 썼어?">
+    <button id="chatSendBtn" class="chat-send-btn" type="button" aria-label="보내기">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
+</section>
+
+</main>
+
+<nav class="mobile-nav">
+  <a href="../main/" class="mobile-nav-item"><span class="mobile-nav-icon">⌂</span><span>홈</span></a>
+  <a href="../day/" class="mobile-nav-item"><span class="mobile-nav-icon">▤</span><span>기간별</span></a>
+  <a href="../report/" class="mobile-nav-item"><span class="mobile-nav-icon">R</span><span>리포트</span></a>
+  <a href="../setting/" class="mobile-nav-item"><span class="mobile-nav-icon">⚙</span><span>설정</span></a>
+  <button id="mobileLogoutBtn" class="mobile-nav-item" type="button"><span class="mobile-nav-icon"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"></path><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path></svg></span><span>로그아웃</span></button>
+</nav>
+<script type="module" src="app.js?v=12"></script>
+<script type="module" src="../shared/notices.js?v=5"></script>
+</body></html>
