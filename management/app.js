@@ -50,7 +50,10 @@ function renderEmailList(ul, emails, onRemove) {
 async function loadManagers() {
   const idToken = await currentUser.getIdToken();
   const data = await callApi(idToken, "/api/management/managers", { action: "list" });
-  if ($("#mgmtOwnerList")) $("#mgmtOwnerList").innerHTML = data.owner ? `<li>${escapeHtml(data.owner)}</li>` : "<li>설정되지 않음</li>";
+  if ($("#mgmtOwnerList")) {
+    const owners = Array.isArray(data.owner) ? data.owner : (data.owner ? [data.owner] : []);
+    $("#mgmtOwnerList").innerHTML = owners.length ? owners.map(o => `<li>${escapeHtml(o)}</li>`).join("") : "<li>설정되지 않음</li>";
+  }
   renderEmailList($("#mgmtManagerList"), data.list, removeManager);
 }
 async function addManager() {

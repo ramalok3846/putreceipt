@@ -586,13 +586,21 @@ async function getAnnouncement(env) {
 }
 async function setAnnouncement(env, announcement) { await setKvValue(env, ANNOUNCEMENT_KV_KEY, announcement); }
 
+// OWNER_EMAIL은 쉼표(,)로 여러 명을 넣을 수 있습니다 (예: "a@x.com,b@y.com").
+function getOwnerEmails(env) {
+  return (env.OWNER_EMAIL || "")
+    .split(",")
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 // idToken의 로그인 이메일이 오너/매니저인지 확인합니다. role은 "owner" | "manager" | null.
 async function roleForEmail(email, env) {
-  const ownerEmail = (env.OWNER_EMAIL || "").toLowerCase();
+  const ownerEmails = getOwnerEmails(env);
   const managerEmails = await getManagerEmails(env);
   const normalizedEmail = email ? email.toLowerCase() : null;
   if (!normalizedEmail) return null;
-  if (ownerEmail && normalizedEmail === ownerEmail) return "owner";
+  if (ownerEmails.includes(normalizedEmail)) return "owner";
   if (managerEmails.includes(normalizedEmail)) return "manager";
   return null;
 }
@@ -645,11 +653,11 @@ async function handleEmailListEndpoint(request, env, { getList, setList, forbidO
   const { email: actorEmail, role } = await checkRole(payload.idToken, env);
   if (role !== "owner") return jsonResponse(403, { error: "오너만 볼 수 있습니다." }, cors);
 
-  const ownerEmail = (env.OWNER_EMAIL || "").toLowerCase();
+  const ownerEmails = getOwnerEmails(env);
   const action = payload.action || "list";
 
   if (action === "list") {
-    return jsonResponse(200, { owner: ownerEmail, list: await getList(env) }, cors);
+    return jsonResponse(200, { owner: ownerEmails, list: await getList(env) }, cors);
   }
 
   if (action === "add" || action === "remove") {
@@ -663,14 +671,14 @@ async function handleEmailListEndpoint(request, env, { getList, setList, forbidO
     const current = await getList(env);
     let updated;
     if (action === "add") {
-      if (forbidOwnerEmail && email === ownerEmail) return jsonResponse(400, { error: "오너 이메일은 추가할 수 없습니다." }, cors);
+      if (forbidOwnerEmail && ownerEmails.includes(email)) return jsonResponse(400, { error: "오너 이메일은 추가할 수 없습니다." }, cors);
       updated = current.includes(email) ? current : [...current, email];
     } else {
       updated = current.filter(e => e !== email);
     }
     await setList(env, updated);
     await logAdminAction(env, actorEmail, `${logLabel} ${action === "add" ? "추가" : "삭제"}`, email);
-    return jsonResponse(200, { owner: ownerEmail, list: updated }, cors);
+    return jsonResponse(200, { owner: ownerEmails, list: updated }, cors);
   }
 
   return jsonResponse(400, { error: "알 수 없는 action입니다." }, cors);
