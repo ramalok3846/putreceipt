@@ -41,6 +41,9 @@
   </div>
 
   <div class="chat-input-row">
+    <button id="chatUnlockBtn" class="chat-unlock-btn" type="button" aria-label="잠금 해제" title="잠금 해제">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+    </button>
     <input id="chatInput" type="text" placeholder="예: 이번 달 카페에서 얼마 썼어?">
     <button id="chatSendBtn" class="chat-send-btn" type="button" aria-label="보내기">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -49,6 +52,17 @@
 </section>
 
 </main>
+
+<div class="modal hidden" id="unlockModal">
+  <div class="modal-card">
+    <button class="close" id="unlockModalClose" type="button" aria-label="닫기">&times;</button>
+    <p class="modal-eyebrow">AI 비서</p>
+    <h2>잠금 해제</h2>
+    <p>코드를 입력하면 하루 사용량 제한 없이 이용할 수 있어요.</p>
+    <input id="unlockCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="코드 입력" autocomplete="off">
+    <button class="primary" id="unlockSubmitBtn" type="button">확인</button>
+  </div>
+</div>
 
 <nav class="mobile-nav">
   <a href="../main/" class="mobile-nav-item"><span class="mobile-nav-icon">⌂</span><span>홈</span></a>

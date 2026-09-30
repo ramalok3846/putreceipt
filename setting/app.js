@@ -4,8 +4,11 @@ import { ref, get, update } from "https://www.gstatic.com/firebasejs/12.2.1/fire
 import { getEmbedder } from "../ai/engine.js?v=3";
 
 const $ = (selector) => document.querySelector(selector);
-// GitHub Pages는 서버 함수를 실행할 수 없어서, 항상 Cloudflare Worker를 절대경로로 호출합니다.
-const API_BASE = "https://putreceipt.lagem1535.workers.dev";
+// 항상 같은 오리진(현재 페이지를 서빙하는 Worker)으로 호출합니다. 예전엔 lagem1535 계정의
+// workers.dev 주소를 절대경로로 하드코딩했는데, 이러면 다른 도메인(ramalok.kr 등)에서
+// 열었을 때 실제 브라우저 크로스오리진 요청이 되어 그 워커의 ALLOWED_ORIGINS에 없는 한
+// CORS로 막힙니다. 상대경로로 두면 무조건 지금 페이지를 서빙 중인 Worker로 가서 안전합니다.
+const API_BASE = "";
 const CARD_LABELS = { monthTotal: "이번 달 지출", receiptCount: "저장된 영수증", monthCount: "이번 달 영수증" };
 const DEFAULT_SETTINGS = { defaultCategory: "식비", defaultPaymentMethod: "", reminderDays: 3, notificationsEnabled: true, sortOrder: "newest", savePhoto: true, monthlyBudget: 0, cardBannerMode: false, cardOrder: ["monthTotal","receiptCount","monthCount"], aiEnabled: false, aiTier: "medium", updatesEnabled: true, aiConfirmActions: true, adminBackground: false };
 let currentUser = null;

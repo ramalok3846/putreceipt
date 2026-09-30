@@ -4,9 +4,10 @@
 // 무료 API를 호출합니다. API 키는 서버에만 있고, 하루 사용 횟수는 계정별로 제한됩니다.
 const TRANSFORMERS_CDN = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.2.4";
 const EMBED_MODEL = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
-// GitHub Pages는 서버 함수를 실행할 수 없어서, 항상 Cloudflare Worker를 절대경로로 호출합니다.
-// (Netlify 무료 크레딧이 소진되어 Cloudflare Workers로 옮겼습니다.)
-const AI_ENDPOINT = "https://putreceipt.lagem1535.workers.dev/api/ai-chat";
+// 항상 현재 페이지를 서빙 중인 Worker의 /api/ai-chat을 상대경로로 호출합니다. 절대경로로
+// 다른 계정의 workers.dev 주소를 박아두면, 다른 도메인에서 열었을 때 진짜 크로스오리진
+// 요청이 되어 그 워커의 ALLOWED_ORIGINS에 없는 한 CORS로 막힙니다.
+const AI_ENDPOINT = "/api/ai-chat";
 
 let transformersMod = null;
 let embedderPromise = null;
@@ -76,13 +77,13 @@ function friendlyError(raw) {
 // tier: "low" | "medium" | "high" | "extreme" — 실제 모델명은 서버에만 있고 등급만 전달합니다.
 // onDelta(chunkText, fullTextSoFar) — 실시간 스트리밍 표시용 콜백 (선택)
 // confirmedAction({name, args}) — 사용자가 방금 승인한, 서버가 실행해야 할 함수 호출(선택).
-async function callAiServer(messages, auth, tier, onDelta, confirmedAction) {
+async function callAiServer(messages, auth, tier, onDelta, confirmedAction, unlockCode) {
   let res;
   try {
     res = await fetch(AI_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, uid: auth?.uid, idToken: auth?.idToken, tier, ...(confirmedAction ? { confirmedAction } : {}) }),
+      body: JSON.stringify({ messages, uid: auth?.uid, idToken: auth?.idToken, tier, ...(confirmedAction ? { confirmedAction } : {}), ...(unlockCode ? { unlockCode } : {}) }),
     });
   } catch {
     throw new Error("AI 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
@@ -102,7 +103,7 @@ async function callAiServer(messages, auth, tier, onDelta, confirmedAction) {
   const decoder = new TextDecoder();
   let buffer = "";
   let fullText = "";
-  let remaining, tokens, confirmRequired;
+  let remaining, tokens, confirmRequired, unlocked;
   const actionResults = [];
   while (true) {
     const { done, value } = await reader.read();
@@ -121,12 +122,12 @@ async function callAiServer(messages, auth, tier, onDelta, confirmedAction) {
       if (evt.delta) { fullText += evt.delta; onDelta?.(evt.delta, fullText); }
       if (evt.actionResult) actionResults.push(evt.actionResult);
       if (evt.confirmRequired) confirmRequired = evt.confirmRequired;
-      if (evt.done) { remaining = evt.remaining; tokens = evt.totalTokens; }
+      if (evt.done) { remaining = evt.remaining; tokens = evt.totalTokens; unlocked = evt.unlocked; }
     }
   }
   // confirmRequired로 끝난 턴은 텍스트 없이 끝나는 게 정상이라, 이 경우에는 예외를 던지지 않습니다.
   if (!confirmRequired && !fullText.trim()) throw new Error("AI가 응답을 생성하지 못했습니다. 다시 시도해주세요.");
-  return { text: fullText.trim(), remaining, tokens, confirmRequired, actionResults };
+  return { text: fullText.trim(), remaining, tokens, confirmRequired, actionResults, unlocked };
 }
 
 // 지출 통계를 바탕으로 자연스러운 한국어 요약 문단을 생성합니다.
@@ -142,7 +143,7 @@ export async function summarizeExpenses(stats, auth, tier, onDelta) {
 
 // 사용자의 영수증 목록을 근거로 질문에 답합니다. history는 [{role,content}, ...] 최근 대화 몇 턴.
 // confirmedAction — 직전 턴에서 AI가 제안한 영수증 등록/삭제를 사용자가 방금 승인했을 때 전달합니다.
-export async function chatAboutReceipts(question, receipts, history, auth, tier, onDelta, confirmedAction) {
+export async function chatAboutReceipts(question, receipts, history, auth, tier, onDelta, confirmedAction, unlockCode) {
   const capped = receipts.slice(0, 300);
   const lines = capped.map(r => `${r.date || "?"} ${r.store || "?"} · ${r.category || "기타"} · ${Number(r.amount || 0).toLocaleString("ko-KR")}원${r.paymentMethod ? ` · ${r.paymentMethod}` : ""}`).join("\n");
   const note = receipts.length > capped.length ? `\n(가장 최근 ${capped.length}건만 표시됨, 전체 ${receipts.length}건 중 일부)` : "";
@@ -152,5 +153,5 @@ export async function chatAboutReceipts(question, receipts, history, auth, tier,
     ...(history || []),
     { role: "user", content: question },
   ];
-  return callAiServer(messages, auth, tier, onDelta, confirmedAction);
+  return callAiServer(messages, auth, tier, onDelta, confirmedAction, unlockCode);
 }

@@ -9,6 +9,8 @@ const DB_URL = "https://pal-inte-db-default-rtdb.asia-southeast1.firebasedatabas
 const ALLOWED_ORIGINS = new Set([
   "https://lagem1535-create.github.io",
   "https://putreceipt.lagem1535.workers.dev",
+  "https://ramalok.kr",
+  "https://www.ramalok.kr",
 ]);
 const OWNER = "lagem1535-create";
 const REPO = "putreceipt";
@@ -339,7 +341,8 @@ async function handleAiChat(request, env) {
 
   let payload;
   try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
-  const { messages, uid, idToken, tier: rawTier, confirmedAction } = payload;
+  const { messages, uid, idToken, tier: rawTier, confirmedAction, unlockCode } = payload;
+  const unlocked = unlockCode === "0000";
   if (!Array.isArray(messages) || !messages.length) {
     return jsonResponse(400, { error: "messages가 필요합니다." }, cors);
   }
@@ -368,7 +371,7 @@ async function handleAiChat(request, env) {
   } catch {
     return jsonResponse(502, { error: "AI 서버 호출에 실패했습니다." }, cors);
   }
-  if (currentTokens >= dailyLimit) {
+  if (!unlocked && currentTokens >= dailyLimit) {
     return jsonResponse(429, { error: `오늘 사용할 수 있는 AI 토큰(${dailyLimit.toLocaleString("ko-KR")})을 모두 썼습니다. 내일 다시 시도해주세요.` }, cors);
   }
 
@@ -432,8 +435,8 @@ async function handleAiChat(request, env) {
             break;
           }
           if (!turn.functionCall) {
-            const remaining = Math.max(dailyLimit - (currentTokens + sumTokens), 0);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, totalTokens: sumTokens, remaining })}\n\n`));
+            const remaining = unlocked ? null : Math.max(dailyLimit - (currentTokens + sumTokens), 0);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, totalTokens: sumTokens, remaining, unlocked })}\n\n`));
             finished = true;
             break;
           }

@@ -3,8 +3,11 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 import { chatAboutReceipts } from "../ai/engine.js?v=7";
 
-// GitHub Pages는 서버 함수를 실행할 수 없어서, 항상 Cloudflare Worker를 절대경로로 호출합니다.
-const API_BASE = "https://putreceipt.lagem1535.workers.dev";
+// 항상 같은 오리진(현재 페이지를 서빙하는 Worker)으로 호출합니다. 예전엔 lagem1535 계정의
+// workers.dev 주소를 절대경로로 하드코딩했는데, 이러면 다른 도메인(ramalok.kr 등)에서
+// 열었을 때 실제 브라우저 크로스오리진 요청이 되어 그 워커의 ALLOWED_ORIGINS에 없는 한
+// CORS로 막힙니다. 상대경로로 두면 무조건 지금 페이지를 서빙 중인 Worker로 가서 안전합니다.
+const API_BASE = "";
 
 const $ = (selector) => document.querySelector(selector);
 const DEFAULT_SETTINGS = { aiEnabled: false, aiTier: "medium" };
@@ -27,6 +30,8 @@ let thinkingActive = false;
 let streamingText = "";
 let pendingAssistantKey = null;
 let pendingConfirm = null; // { name, args, question, history, convId } — AI가 실행 확인을 기다리는 동작
+const UNLOCK_STORAGE_KEY = "pr_ai_unlocked";
+let aiUnlocked = localStorage.getItem(UNLOCK_STORAGE_KEY) === "1";
 
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c])); }
 
@@ -130,10 +135,33 @@ function setChatStatus(text) {
 
 function renderUsage(tokensUsedToday) {
   lastUsedTokens = tokensUsedToday;
-  const pct = Math.min(100, Math.round((tokensUsedToday / dailyTokenLimit) * 100));
-  const fill = $("#chatUsageFill"); if (fill) fill.style.width = `${pct}%`;
+  const fill = $("#chatUsageFill");
   const text = $("#chatUsageText");
+  if (aiUnlocked) {
+    if (fill) fill.style.width = "100%";
+    if (text) text.textContent = "무제한 모드 · 오늘 사용량 제한 없음";
+    return;
+  }
+  const pct = Math.min(100, Math.round((tokensUsedToday / dailyTokenLimit) * 100));
+  if (fill) fill.style.width = `${pct}%`;
   if (text) text.textContent = `오늘 ${tokensUsedToday.toLocaleString("ko-KR")} / ${dailyTokenLimit.toLocaleString("ko-KR")} 토큰`;
+}
+
+function applyUnlockVisual() {
+  $("#chatUnlockBtn")?.classList.toggle("unlocked", aiUnlocked);
+  renderUsage(lastUsedTokens);
+}
+
+function tryUnlock(code) {
+  if (code !== "0000") {
+    window.alert("코드가 올바르지 않습니다.");
+    return;
+  }
+  aiUnlocked = true;
+  localStorage.setItem(UNLOCK_STORAGE_KEY, "1");
+  applyUnlockVisual();
+  $("#unlockModal")?.classList.add("hidden");
+  setChatStatus("잠금이 해제됐어요. 이제 하루 사용량 제한 없이 이용할 수 있어요.");
 }
 
 function subscribeMessages(convId) {
@@ -218,7 +246,7 @@ async function sendMessage() {
     const result = await chatAboutReceipts(question, receipts, history, { uid: currentUser.uid, idToken }, selectedTier, (chunk, full) => {
       streamingText = full;
       updateStreamingBubble();
-    });
+    }, undefined, aiUnlocked ? "0000" : undefined);
 
     if (result.confirmRequired) {
       thinkingActive = false; streamingText = "";
@@ -230,7 +258,7 @@ async function sendMessage() {
       pendingAssistantKey = pushedRef.key;
       await set(pushedRef, { role: "assistant", content: result.text, ts: Date.now() });
       await update(ref(db, `users/${currentUser.uid}/aiChat/convMeta/${convId}`), { updatedAt: Date.now() });
-      setChatStatus(result.tokens != null ? `이번 응답: ${result.tokens.toLocaleString("ko-KR")} 토큰 사용` : "");
+      setChatStatus(result.tokens != null ? `이번 응답: ${result.tokens.toLocaleString("ko-KR")} 토큰 사용${result.unlocked ? " · 무제한 모드" : ""}` : "");
     } else {
       thinkingActive = false; streamingText = "";
       renderMessages();
@@ -260,7 +288,7 @@ async function confirmPendingAction() {
     const result = await chatAboutReceipts(action.question, receipts, action.history, { uid: currentUser.uid, idToken }, selectedTier, (chunk, full) => {
       streamingText = full;
       updateStreamingBubble();
-    }, { name: action.name, args: action.args });
+    }, { name: action.name, args: action.args }, aiUnlocked ? "0000" : undefined);
 
     if (result.confirmRequired) {
       thinkingActive = false; streamingText = "";
@@ -272,7 +300,7 @@ async function confirmPendingAction() {
       pendingAssistantKey = pushedRef.key;
       await set(pushedRef, { role: "assistant", content: result.text, ts: Date.now() });
       await update(ref(db, `users/${currentUser.uid}/aiChat/convMeta/${action.convId}`), { updatedAt: Date.now() });
-      setChatStatus(result.tokens != null ? `이번 응답: ${result.tokens.toLocaleString("ko-KR")} 토큰 사용` : "");
+      setChatStatus(result.tokens != null ? `이번 응답: ${result.tokens.toLocaleString("ko-KR")} 토큰 사용${result.unlocked ? " · 무제한 모드" : ""}` : "");
     } else {
       thinkingActive = false; streamingText = "";
       renderMessages();
@@ -314,6 +342,16 @@ $("#tierButtons")?.addEventListener("click", (event) => {
   tierManuallySet = true;
   setTier(btn.dataset.tier);
 });
+
+$("#chatUnlockBtn")?.addEventListener("click", () => {
+  $("#unlockModal")?.classList.remove("hidden");
+  $("#unlockCodeInput")?.focus();
+});
+$("#unlockModalClose")?.addEventListener("click", () => $("#unlockModal")?.classList.add("hidden"));
+$("#unlockModal")?.addEventListener("click", (event) => { if (event.target.id === "unlockModal") $("#unlockModal")?.classList.add("hidden"); });
+$("#unlockSubmitBtn")?.addEventListener("click", () => tryUnlock(($("#unlockCodeInput")?.value || "").trim()));
+$("#unlockCodeInput")?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); tryUnlock(event.target.value.trim()); } });
+applyUnlockVisual();
 
 async function handleLogout() { try { await authPersistenceReady; await signOut(auth); window.location.replace("../login/"); } catch (error) { window.alert(`로그아웃에 실패했습니다.\n${error.message || "잠시 후 다시 시도해주세요."}`); } }
 $("#logoutBtn")?.addEventListener("click", handleLogout);
