@@ -17,7 +17,19 @@ binding = "ASSETS"
 binding = "MANAGERS_KV"
 id = "30c58ee828c44245aaea28f5294854f1"
 
-# 옛 프로젝트(fir-2-f3b80) DB를 pal-inte-db로 계속 복제(미러링)하는 주기 실행.
-# Cloudflare Cron Trigger의 최소 주기는 1분입니다 — "실시간"에 가장 가깝게 맞춘 값입니다.
+# Cloudflare Cron Trigger의 최소 주기는 1분이라, 이건 아래 Durable Object의 alarm
+# 체인이 꺼져 있을 때만 다시 깨우는 안전망입니다. 실제 몇 초 단위 동기화는
+# SyncDurableObject가 담당합니다.
 [triggers]
 crons = ["*/1 * * * *"]
+
+# 옛 프로젝트(fir-2-f3b80) DB를 pal-inte-db로 몇 초 간격(SYNC_DO_INTERVAL_MS)으로
+# 계속 복제(미러링)하는 Durable Object. Workers 무료 플랜은 SQLite 기반 Durable
+# Object만 지원하므로 new_sqlite_classes를 씁니다.
+[[durable_objects.bindings]]
+name = "SYNC_DO"
+class_name = "SyncDurableObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SyncDurableObject"]

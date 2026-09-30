@@ -348,7 +348,8 @@ async function handleAiChat(request, env) {
   if (!uid || !idToken) {
     return jsonResponse(401, { error: "로그인 정보가 필요합니다." }, cors);
   }
-  const unlocked = unlockCode === "0000" || await hasUnlockOverride(uid, idToken);
+  const featureFlags = await getExtraFeatures(env);
+  const unlocked = featureFlags.aiUnlockEnabled && (unlockCode === "0000" || await hasUnlockOverride(uid, idToken));
 
   const callerEmail = await verifyIdTokenEmail(idToken);
   if (!unlocked && await isBanned(callerEmail, env)) {
@@ -501,6 +502,8 @@ const ANNOUNCEMENT_KV_KEY = "announcement";
 const USER_LIMITS_KV_KEY = "userLimits";
 const ADMIN_LOG_KV_KEY = "adminLog";
 const ADMIN_LOG_MAX_ENTRIES = 200;
+const FEATURES_KV_KEY = "extraFeatures";
+const DEFAULT_FEATURES = { aiUnlockEnabled: true, oldDbSyncEnabled: true };
 
 async function getKvValue(env, key) {
   if (!env.MANAGERS_KV) return null;
@@ -533,6 +536,14 @@ async function isBanned(email, env) {
   if (!email) return false;
   return (await getBannedEmails(env)).includes(email.toLowerCase());
 }
+
+// 이번에 덧붙인 기능들(AI 잠금해제 코드, 옛 DB 자동복제)을 원래 기능과 분리해서
+// 켜고 끌 수 있는 스위치입니다. 원래 기능(로그인, AI 채팅, 관리 페이지 등)은 이 값과
+// 무관하게 항상 그대로 동작합니다.
+async function getExtraFeatures(env) {
+  return { ...DEFAULT_FEATURES, ...(await getKvValue(env, FEATURES_KV_KEY)) };
+}
+async function setExtraFeatures(env, features) { await setKvValue(env, FEATURES_KV_KEY, features); }
 
 // 잠금 해제(코드 0000) 시 클라이언트가 users/<uid>/aiUnlocked에 true를 직접 저장합니다.
 // 요청마다 오는 unlockCode뿐 아니라 이 DB 플래그도 확인해서, 한 번 풀어두면 이후
@@ -653,7 +664,8 @@ async function handleAccessStatus(request, env) {
   if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
 
   const email = await verifyIdTokenEmail(payload.idToken);
-  const unlocked = await hasUnlockOverride(payload.uid, payload.idToken);
+  const featureFlags = await getExtraFeatures(env);
+  const unlocked = featureFlags.aiUnlockEnabled && await hasUnlockOverride(payload.uid, payload.idToken);
   const banned = unlocked ? false : await isBanned(email, env);
   return jsonResponse(200, { banned, dailyTokenLimit: await getDailyTokenLimit(env, email), unlocked }, cors);
 }
@@ -1008,6 +1020,35 @@ async function syncOldDbToNew(env) {
   return { synced, failed };
 }
 
+// 이번에 덧붙인 기능(AI 잠금해제 코드, 옛 DB 자동복제)의 켜기/끄기 — 오너 전용.
+// 원래 있던 기능들과는 별도 저장 키(extraFeatures)라 서로 영향을 주지 않습니다.
+async function handleManagementFeatures(request, env) {
+  const cors = corsHeaders(request);
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  if (request.method !== "POST") return jsonResponse(405, { error: "Method Not Allowed" }, cors);
+
+  let payload;
+  try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
+  if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
+
+  const { email: actorEmail, role } = await checkRole(payload.idToken, env);
+  if (role !== "owner") return jsonResponse(403, { error: "오너만 볼 수 있습니다." }, cors);
+
+  const action = payload.action || "get";
+  if (action === "set") {
+    const current = await getExtraFeatures(env);
+    const updated = {
+      aiUnlockEnabled: typeof payload.aiUnlockEnabled === "boolean" ? payload.aiUnlockEnabled : current.aiUnlockEnabled,
+      oldDbSyncEnabled: typeof payload.oldDbSyncEnabled === "boolean" ? payload.oldDbSyncEnabled : current.oldDbSyncEnabled,
+    };
+    await setExtraFeatures(env, updated);
+    await logAdminAction(env, actorEmail, "추가 기능 설정 변경", JSON.stringify(updated));
+    return jsonResponse(200, updated, cors);
+  }
+
+  return jsonResponse(200, await getExtraFeatures(env), cors);
+}
+
 // 관리 페이지에서 지금 바로 1회 복제를 실행할 때 씁니다(오너 전용). 주기 동기화는
 // wrangler.toml의 cron 트리거(scheduled 핸들러)가 자동으로 돌립니다.
 async function handleManagementSyncOldDb(request, env) {
@@ -1088,6 +1129,39 @@ async function handlePrAction(request, env) {
   }
 }
 
+// 옛 DB 복제를 몇 초 간격으로 계속 돌리는 용도의 Durable Object입니다. Cloudflare
+// Cron Trigger는 최소 주기가 1분이라 그것만으로는 몇 초 단위 동기화가 안 되는데,
+// Durable Object의 alarm()은 원하는 시각에 스스로를 다시 예약할 수 있어서 훨씬
+// 짧은 주기로 계속 돌릴 수 있습니다. 이 클래스가 어떤 이유로든(재배포, 유휴 상태
+// 등) 죽어 있으면 1분마다 도는 Cron이 다시 깨워(ping) 줍니다.
+const SYNC_DO_INTERVAL_MS = 4000; // "3~5초 정도"에 맞춘 값
+export class SyncDurableObject {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+  async fetch() {
+    const existing = await this.state.storage.getAlarm();
+    if (existing === null) await this.state.storage.setAlarm(Date.now() + SYNC_DO_INTERVAL_MS);
+    return new Response("ok");
+  }
+  async alarm() {
+    try {
+      const features = await getExtraFeatures(this.env);
+      if (features.oldDbSyncEnabled) await syncOldDbToNew(this.env);
+    } catch (err) {
+      console.error("옛 DB 동기화(DO) 실패:", err.message);
+    }
+    await this.state.storage.setAlarm(Date.now() + SYNC_DO_INTERVAL_MS);
+  }
+}
+
+function pingSyncDo(env) {
+  if (!env.SYNC_DO) return Promise.resolve();
+  const stub = env.SYNC_DO.get(env.SYNC_DO.idFromName("singleton"));
+  return stub.fetch("https://sync-do/ping");
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1103,14 +1177,19 @@ export default {
     if (url.pathname === "/api/management/notices") return handleManagementNotices(request, env);
     if (url.pathname === "/api/management/user-limits") return handleManagementUserLimits(request, env);
     if (url.pathname === "/api/management/log") return handleManagementLog(request, env);
-    if (url.pathname === "/api/management/sync-old-db") return handleManagementSyncOldDb(request, env);
+    if (url.pathname === "/api/management/sync-old-db") {
+      const res = await handleManagementSyncOldDb(request, env);
+      pingSyncDo(env).catch(() => {});
+      return res;
+    }
+    if (url.pathname === "/api/management/features") return handleManagementFeatures(request, env);
     return env.ASSETS.fetch(request);
   },
 
-  // Cron 트리거(wrangler.toml의 [triggers] crons)로 주기 실행됩니다. 옛 DB의
-  // 변경사항을 pal-inte-db로 계속 미러링해서, 아직 lagem1535님 배포(옛 DB를 씀)를
-  // 쓰는 사람이 있어도 데이터가 새 DB에도 계속 반영되게 합니다.
+  // Cron 트리거(wrangler.toml의 [triggers] crons, 최소 주기 1분)로 주기 실행됩니다.
+  // 실제 몇 초 단위 동기화는 SyncDurableObject의 alarm()이 담당하고, 이 cron은
+  // 그 alarm 체인이 꺼져 있을 때 다시 깨워주는 안전망 역할입니다.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(syncOldDbToNew(env).catch(err => console.error("옛 DB 동기화 실패:", err.message)));
+    ctx.waitUntil(pingSyncDo(env).catch(err => console.error("동기화 DO ping 실패:", err.message)));
   },
 };
