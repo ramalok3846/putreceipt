@@ -342,16 +342,16 @@ async function handleAiChat(request, env) {
   let payload;
   try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
   const { messages, uid, idToken, tier: rawTier, confirmedAction, unlockCode } = payload;
-  const unlocked = unlockCode === "0000";
   if (!Array.isArray(messages) || !messages.length) {
     return jsonResponse(400, { error: "messages가 필요합니다." }, cors);
   }
   if (!uid || !idToken) {
     return jsonResponse(401, { error: "로그인 정보가 필요합니다." }, cors);
   }
+  const unlocked = unlockCode === "0000" || await hasUnlockOverride(uid, idToken);
 
   const callerEmail = await verifyIdTokenEmail(idToken);
-  if (await isBanned(callerEmail, env)) {
+  if (!unlocked && await isBanned(callerEmail, env)) {
     return jsonResponse(403, { error: "이용이 제한된 계정입니다." }, cors);
   }
 
@@ -534,6 +534,20 @@ async function isBanned(email, env) {
   return (await getBannedEmails(env)).includes(email.toLowerCase());
 }
 
+// 잠금 해제(코드 0000) 시 클라이언트가 users/<uid>/aiUnlocked에 true를 직접 저장합니다.
+// 요청마다 오는 unlockCode뿐 아니라 이 DB 플래그도 확인해서, 한 번 풀어두면 이후
+// 로그인 시 차단(밴) 여부 확인에서도 계속 통과되도록(=DB 차원에서 제한이 풀리도록) 합니다.
+async function hasUnlockOverride(uid, idToken) {
+  if (!uid || !idToken) return false;
+  try {
+    const res = await fetch(`${DB_URL}/users/${uid}/aiUnlocked.json?auth=${idToken}`);
+    if (!res.ok) return false;
+    return (await res.json()) === true;
+  } catch {
+    return false;
+  }
+}
+
 // AI 하루 토큰 한도: 관리 페이지에서 조정 가능. email이 있고 그 사람만의 한도가
 // 설정돼 있으면 그 값을 우선 쓰고, 아니면 전체 기본값(설정 없으면 DAILY_TOKEN_LIMIT).
 async function getDailyTokenLimit(env, email) {
@@ -639,7 +653,9 @@ async function handleAccessStatus(request, env) {
   if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
 
   const email = await verifyIdTokenEmail(payload.idToken);
-  return jsonResponse(200, { banned: await isBanned(email, env), dailyTokenLimit: await getDailyTokenLimit(env, email) }, cors);
+  const unlocked = await hasUnlockOverride(payload.uid, payload.idToken);
+  const banned = unlocked ? false : await isBanned(email, env);
+  return jsonResponse(200, { banned, dailyTokenLimit: await getDailyTokenLimit(env, email), unlocked }, cors);
 }
 
 // 관리(어드민) 페이지의 이메일 목록형 리소스(매니저/차단 목록) 공용 처리기 —
@@ -909,6 +925,112 @@ async function handleManagementLog(request, env) {
   return jsonResponse(200, { log: await getAdminLog(env) }, cors);
 }
 
+// --- 옛 프로젝트(fir-2-f3b80) DB → 지금 쓰는 pal-inte-db DB로 사용자 데이터 복제 ---
+// 목적 DB의 보안 규칙이 uid 기반(auth.uid === $uid)이라, 서버가 남의 uid 아래에 쓰려면
+// idToken이 아니라 서비스 계정으로 발급받은 관리자 접근 토큰이 필요합니다. 이 토큰은
+// 보안 규칙을 완전히 우회하므로 FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY는 반드시
+// Cloudflare 환경변수(비밀)로만 넣어야 합니다.
+const OLD_DB_URL = "https://fir-2-f3b80-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+function base64urlFromBytes(bytes) {
+  let binary = "";
+  for (const b of new Uint8Array(bytes)) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function pemToPkcs8(pem) {
+  const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s+/g, "");
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// 서비스 계정으로 Google OAuth2 액세스 토큰을 발급받습니다(JWT bearer 플로우).
+// Realtime Database REST API에 이 토큰을 Authorization: Bearer로 실어 보내면
+// 보안 규칙과 무관하게 관리자 권한으로 읽고 쓸 수 있습니다.
+async function getFirebaseAdminAccessToken(env) {
+  const clientEmail = env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = (env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+  if (!clientEmail || !privateKey) throw new Error("FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY가 설정되지 않았습니다.");
+
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "RS256", typ: "JWT" };
+  const claimSet = {
+    iss: clientEmail,
+    scope: "https://www.googleapis.com/auth/firebase.database",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  };
+  const unsigned = `${base64urlFromBytes(new TextEncoder().encode(JSON.stringify(header)))}.${base64urlFromBytes(new TextEncoder().encode(JSON.stringify(claimSet)))}`;
+  const key = await crypto.subtle.importKey(
+    "pkcs8", pemToPkcs8(privateKey), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = await crypto.subtle.sign({ name: "RSASSA-PKCS1-v1_5" }, key, new TextEncoder().encode(unsigned));
+  const jwt = `${unsigned}.${base64urlFromBytes(signature)}`;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }),
+  });
+  if (!res.ok) throw new Error(`구글 인증 토큰 발급 실패 (${res.status})`);
+  const data = await res.json();
+  return data.access_token;
+}
+
+// 옛 DB(fir-2-f3b80, 규칙 true/true라 인증 없이 읽힘)의 users/<uid> 각각을 통째로 읽어서
+// pal-inte-db의 같은 uid 경로에 덮어씁니다. 옛 DB에 없는 uid(=pal-inte-db에서 새로 가입한
+// 사람)는 절대 건드리지 않으므로, 실제로 쓰는 계정의 데이터를 지울 위험은 없습니다.
+async function syncOldDbToNew(env) {
+  const accessToken = await getFirebaseAdminAccessToken(env);
+
+  const oldRes = await fetch(`${OLD_DB_URL}/users.json`);
+  if (!oldRes.ok) throw new Error(`옛 DB 읽기 실패 (${oldRes.status})`);
+  const oldUsers = await oldRes.json();
+  if (!oldUsers || typeof oldUsers !== "object") return { synced: [] };
+
+  const synced = [];
+  const failed = [];
+  for (const uid of Object.keys(oldUsers)) {
+    try {
+      const putRes = await fetch(`${DB_URL}/users/${uid}.json`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify(oldUsers[uid]),
+      });
+      if (putRes.ok) synced.push(uid); else failed.push(uid);
+    } catch {
+      failed.push(uid);
+    }
+  }
+  return { synced, failed };
+}
+
+// 관리 페이지에서 지금 바로 1회 복제를 실행할 때 씁니다(오너 전용). 주기 동기화는
+// wrangler.toml의 cron 트리거(scheduled 핸들러)가 자동으로 돌립니다.
+async function handleManagementSyncOldDb(request, env) {
+  const cors = corsHeaders(request);
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  if (request.method !== "POST") return jsonResponse(405, { error: "Method Not Allowed" }, cors);
+
+  let payload;
+  try { payload = await request.json(); } catch { return jsonResponse(400, { error: "잘못된 요청입니다." }, cors); }
+  if (!payload.idToken) return jsonResponse(400, { error: "로그인 정보가 필요합니다." }, cors);
+
+  const { email: actorEmail, role } = await checkRole(payload.idToken, env);
+  if (role !== "owner") return jsonResponse(403, { error: "오너만 실행할 수 있습니다." }, cors);
+
+  try {
+    const result = await syncOldDbToNew(env);
+    await logAdminAction(env, actorEmail, "옛 DB 복제 실행", `${result.synced.length}명 동기화${result.failed?.length ? `, ${result.failed.length}명 실패` : ""}`);
+    return jsonResponse(200, result, cors);
+  } catch (err) {
+    return jsonResponse(500, { error: err.message || "동기화에 실패했습니다." }, cors);
+  }
+}
+
 async function handlePrAction(request, env) {
   const cors = corsHeaders(request);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
@@ -981,6 +1103,14 @@ export default {
     if (url.pathname === "/api/management/notices") return handleManagementNotices(request, env);
     if (url.pathname === "/api/management/user-limits") return handleManagementUserLimits(request, env);
     if (url.pathname === "/api/management/log") return handleManagementLog(request, env);
+    if (url.pathname === "/api/management/sync-old-db") return handleManagementSyncOldDb(request, env);
     return env.ASSETS.fetch(request);
+  },
+
+  // Cron 트리거(wrangler.toml의 [triggers] crons)로 주기 실행됩니다. 옛 DB의
+  // 변경사항을 pal-inte-db로 계속 미러링해서, 아직 lagem1535님 배포(옛 DB를 씀)를
+  // 쓰는 사람이 있어도 데이터가 새 DB에도 계속 반영되게 합니다.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(syncOldDbToNew(env).catch(err => console.error("옛 DB 동기화 실패:", err.message)));
   },
 };

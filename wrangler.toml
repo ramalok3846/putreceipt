@@ -16,3 +16,8 @@ binding = "ASSETS"
 [[kv_namespaces]]
 binding = "MANAGERS_KV"
 id = "30c58ee828c44245aaea28f5294854f1"
+
+# 옛 프로젝트(fir-2-f3b80) DB를 pal-inte-db로 계속 복제(미러링)하는 주기 실행.
+# Cloudflare Cron Trigger의 최소 주기는 1분입니다 — "실시간"에 가장 가깝게 맞춘 값입니다.
+[triggers]
+crons = ["*/1 * * * *"]

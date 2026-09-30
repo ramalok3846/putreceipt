@@ -40,7 +40,7 @@ async function afterAuth(user) {
     const res = await fetch(`${API_BASE}/api/access-status`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken, uid: user.uid }),
     });
     const data = await res.json().catch(() => ({}));
     if (data.banned) {

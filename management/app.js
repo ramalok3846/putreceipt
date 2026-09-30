@@ -344,6 +344,23 @@ async function loadAdminLog() {
   }
 }
 
+async function syncOldDb() {
+  const status = $("#mgmtSyncOldDbStatus");
+  const btn = $("#mgmtSyncOldDbBtn");
+  if (btn) btn.disabled = true;
+  if (status) status.textContent = "복제하는 중...";
+  try {
+    const idToken = await currentUser.getIdToken();
+    const data = await callApi(idToken, "/api/management/sync-old-db");
+    const failedText = data.failed?.length ? `, 실패 ${data.failed.length}명` : "";
+    if (status) status.textContent = `완료: ${data.synced?.length || 0}명 동기화${failedText}`;
+  } catch (error) {
+    if (status) status.textContent = `실패: ${error.message || ""}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 async function loadAll() {
   try {
     await loadManagers();
@@ -370,6 +387,7 @@ $("#mgmtAnnouncementSaveBtn")?.addEventListener("click", saveAnnouncement);
   .forEach(id => $(`#${id}`)?.addEventListener("input", updateAnnouncementPreview));
 $("#mgmtUsersRefreshBtn")?.addEventListener("click", loadUsers);
 $("#mgmtLogRefreshBtn")?.addEventListener("click", loadAdminLog);
+$("#mgmtSyncOldDbBtn")?.addEventListener("click", syncOldDb);
 $("#mgmtUsersSearchInput")?.addEventListener("input", applyUserFilter);
 
 async function handleLogout() { try { await authPersistenceReady; await signOut(auth); window.location.replace("../login/"); } catch (error) { window.alert(`로그아웃에 실패했습니다.\n${error.message || "잠시 후 다시 시도해주세요."}`); } }

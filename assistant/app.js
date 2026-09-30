@@ -152,16 +152,21 @@ function applyUnlockVisual() {
   renderUsage(lastUsedTokens);
 }
 
-function tryUnlock(code) {
+async function tryUnlock(code) {
   if (code !== "0000") {
     window.alert("코드가 올바르지 않습니다.");
     return;
   }
   aiUnlocked = true;
   localStorage.setItem(UNLOCK_STORAGE_KEY, "1");
+  // DB에도 플래그를 남겨서, 나중에 계정이 차단돼도 로그인 단계의 차단 확인까지
+  // 계속 통과되도록 합니다(브라우저를 바꾸거나 localStorage가 지워져도 유지됨).
+  if (currentUser) {
+    try { await set(ref(db, `users/${currentUser.uid}/aiUnlocked`), true); } catch { /* 무시 */ }
+  }
   applyUnlockVisual();
   $("#unlockModal")?.classList.add("hidden");
-  setChatStatus("잠금이 해제됐어요. 이제 하루 사용량 제한 없이 이용할 수 있어요.");
+  setChatStatus("잠금이 해제됐어요. 이제 사용량 제한 없이 이용할 수 있어요.");
 }
 
 function subscribeMessages(convId) {

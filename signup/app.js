@@ -47,7 +47,7 @@ form.addEventListener("submit", async (event) => {
       const banRes = await fetch(`${API_BASE}/api/access-status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken, uid: user.uid }),
       });
       const banData = await banRes.json().catch(() => ({}));
       if (banData.banned) {
